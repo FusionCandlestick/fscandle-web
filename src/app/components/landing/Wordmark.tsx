@@ -1,3 +1,4 @@
+import { asset } from "../../lib/asset";
 import { cn } from "./styles";
 
 /**
@@ -23,7 +24,7 @@ export function Wordmark({
       <span
         aria-hidden
         className="block shrink-0 bg-center bg-no-repeat [background-size:contain]"
-        style={{ width: size, height: size, backgroundImage: "url(/logo.svg)" }}
+        style={{ width: size, height: size, backgroundImage: `url(${asset("/logo.svg")})` }}
       />
       {!markOnly && (
         <span

@@ -11,3 +11,5 @@ export default function robots(): MetadataRoute.Robots {
     sitemap: "https://fusioncandlestick.dev/sitemap.xml",
   };
 }
+
+export const dynamic = "force-static";

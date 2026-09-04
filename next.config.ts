@@ -1,14 +1,14 @@
-import path from "node:path";
 import type { NextConfig } from "next";
 
+// Static export for GitHub Pages. `NEXT_PUBLIC_BASE_PATH` is set by the deploy
+// workflow to the project-pages subpath (`/fscandle-web`); it is empty for
+// local dev and for a future custom-domain deploy.
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ["localhost", "127.0.0.1", "192.3.250.160"],
-  // `fscandle` is a local `file:` dependency during development (a symlink into
-  // ../fscandle). Turbopack needs the workspace root pinned here so it
-  // follows the link, and the package compiled through the app's own pipeline.
-  turbopack: {
-    root: path.join(__dirname, ".."),
-  },
+  output: "export",
+  basePath: basePath || undefined,
+  images: { unoptimized: true },
   transpilePackages: ["fscandle"],
 };
 

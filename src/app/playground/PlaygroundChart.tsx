@@ -6,6 +6,7 @@ import { FusionCandlestickChart, type DrawingLayer } from "fscandle";
 import type { PriceScaleMode } from "fscandle";
 import type { KLineData } from "fscandle";
 import { THEMES, type ThemeMode } from "../ui/theme";
+import { asset } from "../lib/asset";
 
 export type Period = "1m" | "5m" | "15m" | "30m" | "1h" | "4h" | "1d" | "1w";
 export type ChartStyle = "candle" | "hollow" | "line" | "baseline" | "area" | "ha" | "bar";
@@ -68,7 +69,7 @@ const exchangeWallClockTimestamp = (value: string): number => {
 
 const loadHistoricalData = async (symbol: string, period: Period): Promise<KLineData[]> => {
   const response = await fetch(
-    `/data/fmp/${encodeURIComponent(symbol)}/${PERIOD_FILES[period]}.json`,
+    asset(`/data/fmp/${encodeURIComponent(symbol)}/${PERIOD_FILES[period]}.json`),
     { cache: "no-store" },
   );
   if (!response.ok) return [];

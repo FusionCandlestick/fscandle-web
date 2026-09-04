@@ -2,43 +2,45 @@
 
 Marketing site and interactive playground for [**fscandle**](https://github.com/FusionCandlestick/fscandle) — the free-form HTML5 Canvas K-line chart engine.
 
-Deploys to `fusioncandlestick.dev`. Two routes are the whole surface:
+Static site, no server runtime. Two routes are the whole surface:
 
 - `/` — product homepage: capability tour, live demos, FAQ, SEO/GEO metadata
 - `/playground` — a FusionQuant-style workspace shell: drawing tools and layers, compare series, watchlist, layouts, screenshot, fullscreen, symbol switching
 
-Every route prerenders to static HTML; there is no server runtime.
-
 ## Develop
 
 ```bash
-npm install          # links ../fscandle as the `fscandle` dependency
+npm install
 npm run dev
 ```
 
-The `fscandle` engine is consumed as a local `file:` dependency during
-development. `next.config.ts` pins the Turbopack workspace root one level up so
-the symlink resolves, and lists `fscandle` in `transpilePackages`. When the
-package is published, swap the dependency in `package.json` for a version range.
-
-If you change the engine, rebuild it so the `dist/` the app imports is current:
+The `fscandle` engine is a normal npm dependency (`fscandle@^0.1.0`). To develop
+against a local checkout of the engine instead, `npm link` it:
 
 ```bash
-cd ../fscandle && npm run build:library
+cd ../fscandle && npm run build:library && npm link
+cd ../fscandle-web && npm link fscandle
 ```
+
+## Deploy
+
+`next.config.ts` sets `output: "export"`. Pushing to `main` runs
+`.github/workflows/deploy.yml`, which builds with
+`NEXT_PUBLIC_BASE_PATH=/fscandle-web` and publishes `out/` to GitHub Pages at
+`https://fusioncandlestick.github.io/fscandle-web/`. Point `fetch()` targets and
+`url(...)` assets through `src/app/lib/asset.ts` so the base path is applied.
+Drop `NEXT_PUBLIC_BASE_PATH` once the site moves to a custom domain.
 
 ## Commands
 
 | command | what it does |
 | --- | --- |
 | `npm run dev` | Next dev server |
-| `npm run build` | production build (static export-ready) |
-| `npm run start` | serve the production build |
+| `npm run build` | static export to `out/` |
 | `npm run lint` | ESLint (eslint-config-next) |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run test:e2e` | Playwright — routes, gestures, screenshot regression |
 | `npm run test:e2e:update` | refresh screenshot baselines |
-| `npm run capture:media` | regenerate the engine README screenshots from a production build |
 
 ## Data
 
@@ -47,4 +49,5 @@ built-in symbols. `/playground` fetches these directly; there is no data API.
 
 ## License
 
-Non-commercial. See [`../fscandle/LICENSE`](https://github.com/FusionCandlestick/fscandle/blob/main/LICENSE).
+Non-commercial, inherited from the engine. See
+[fscandle/LICENSE](https://github.com/FusionCandlestick/fscandle/blob/main/LICENSE).
