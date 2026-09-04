@@ -1,0 +1,26 @@
+{
+  "symbol": "NVDA",
+  "source": "OptionsHolyGrail daily cache (Yahoo); intraday synthesised from daily OHLC",
+  "window": {
+    "start": "2025-01-02",
+    "end": "2025-12-19"
+  },
+  "intervals": {
+    "1day": 243,
+    "1week": 51,
+    "1min": 1000,
+    "5min": 1000,
+    "15min": 1000,
+    "30min": 1000,
+    "1hour": 1000,
+    "4hour": 243
+  },
+  "synthetic": [
+    "1min",
+    "5min",
+    "15min",
+    "30min",
+    "1hour",
+    "4hour"
+  ]
+}

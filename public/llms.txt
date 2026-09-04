@@ -1,0 +1,63 @@
+# FusionCandlestick
+
+> `fscandle` is a non-commercial, source-available HTML5 Canvas K-line
+> (candlestick) chart engine with a custom renderer. It builds its own charting
+> surface rather than wrapping an existing library; KLineCharts and Lightweight
+> Charts are used only as reference baselines, not dependencies.
+
+This site (fusioncandlestick.dev) is the marketing page and interactive
+playground. The engine is a separate repository and npm package, `fscandle`.
+
+Status: v0.1.0. The public API is 0.x and may change between minor versions.
+
+## What it is
+
+- A framework-neutral chart engine: `createChart(container, options)` from
+  `fscandle`.
+- A React entry: `FusionCandlestickChartComponent` from `fscandle/react`
+  (ships the `"use client"` directive; importable from a Next.js App Router
+  server component). `react` and `react-dom` >= 18 are optional peer dependencies.
+- A datafeed entry: `bindMarketDataFeed` and static / replay / polling /
+  WebSocket feed helpers from `fscandle/datafeed`.
+
+## This site
+
+- `/` — product homepage: capability tour, live demos, FAQ, SEO/GEO metadata.
+- `/playground` — a multi-panel workspace shell: drawing tools and layers,
+  compare series, watchlist, layouts, screenshot, fullscreen, symbol switching.
+- Every route is prerendered to static HTML; there is no server runtime.
+
+## Engine capabilities
+
+- Series renderers (8): candlestick, hollow candle, Heikin-Ashi, OHLC bar,
+  area, line, step line, baseline; plus a volume mode.
+- Built-in indicators (16): MA, EMA, BOLL, MACD, RSI, KDJ, WR, VOLMA, ATR,
+  ADX, ROC, CCI, OBV, VWAP, STOCHRSI, PSAR.
+- Multiple panes, multi-column price axes, synced charts, overlay drawing
+  tools with magnet snapping, and local state persistence.
+- Public facade APIs: `timeScale()`, `priceScale()`, `series()`, `pane()`.
+- `ChartPrimitive` extension API: pane/axis views, hit testing, pointer handlers.
+- Declarative custom series via `defineSeriesType`; custom overlays via figure
+  descriptors with draw/select/click/drag/remove lifecycle callbacks.
+- Explicit `Period` / `TradingSession` model with timezone-aware axis
+  labelling and session-aware gap compression (e.g. `cn-futures-night`).
+- Nine packaged locale dictionaries (en-US, zh-CN, zh-TW, ja-JP, ko-KR,
+  de-DE, es-ES, fr-FR, ru-RU) with fallback resolution.
+- Typed event subscriptions: click, double click, context menu, crosshair
+  move, visible range, size, overlay change, data change.
+- Multi-touch pinch-to-zoom and two-finger pan.
+
+## Performance notes (no guaranteed numbers)
+
+The project publishes no benchmarked production performance guarantee for v0.1.
+Every bar is drawn in one Canvas pass with no per-bar DOM nodes; drawing is
+device-pixel aware. A browser frame benchmark fails the build on median/p95
+frame-interval and heap-growth regressions; the engine survives large datasets
+in its own stability probe. Treat any specific FPS or latency figure as
+unverified unless it comes from that harness.
+
+## Links
+
+- Engine source: https://github.com/FusionCandlestick/fscandle
+- Site source: https://github.com/FusionCandlestick/fscandle-web
+- License: FusionCandlestick Non-Commercial Source License 1.0

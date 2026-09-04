@@ -1,0 +1,173 @@
+@import "tailwindcss";
+
+/**
+ * Type system — one source of truth for chrome and canvas.
+ *
+ * The chrome and the chart engine draw with the same stack (#1, "System
+ * Classic" — no web font, resolves to San Francisco / Segoe UI / Roboto per
+ * OS), so a price on the axis and the same price in the toolbar match. The
+ * engine's `defaultOptions.layout.fontFamily` carries the identical string.
+ *
+ * The scale is deliberately small: six integer sizes, four weights, three
+ * line-heights, two letter-spacings. Snap anything else to the nearest.
+ */
+:root {
+  --background: #070b14;
+  --foreground: #f8fafc;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* size — integer px, no in-betweens */
+  --text-10: 10px;
+  --text-12: 12px;
+  --text-16: 16px;
+  --text-24: 24px;
+  --text-32: 32px;
+  --text-48: 48px;
+
+  /* weight — no 700 */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-extrabold: 800;
+
+  /* line-height — unitless */
+  --lh-solid: 1; /* single-line numerics: KPI, price pill, axis tick, badge */
+  --lh-dense: 1.2; /* headings 24/32/48 + wrapping table rows + 10–12px labels */
+  --lh-text: 1.4; /* everything read as prose: 12px UI body + 16px landing/FAQ */
+
+  /* letter-spacing */
+  --tracking-title: -0.02em; /* every heading: 24 / 32 / 48px */
+  --tracking-normal: 0; /* body, UI, numbers, uppercase labels — everything else */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  /* Brand wordmark face; the value of --font-display is injected on <html> by
+     next/font (layout.tsx) and only used by the logo lockup. */
+  --font-display: var(--font-display), var(--font-sans);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --background: #ffffff;
+    --foreground: #171717;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  /* Prose default. Headings and single-line readouts override to
+     var(--lh-dense) / var(--lh-solid); this keeps untagged copy off the
+     browser's variable "normal". */
+  line-height: var(--lh-text);
+  /* Tabular figures keep a price from reflowing as its digits change, which is
+     what a quote ticking once a second does to a proportional font. */
+  font-variant-numeric: tabular-nums;
+}
+
+/* Modern Superellipse (n=3) Curvature across UI components */
+article,
+button,
+input,
+select,
+[class*="rounded-"],
+.surface-glass {
+  corner-shape: superellipse(3);
+}
+
+/* The pointer is a chart gesture, not a text selection. */
+canvas {
+  user-select: none;
+}
+
+/**
+ * The chevron on a restyled `<select>`.
+ *
+ * `appearance-none` removes the platform's arrow along with the rest of its
+ * chrome, so the control has to draw its own. It is here rather than in a
+ * Tailwind class because the data URI contains spaces, which an arbitrary
+ * value may not.
+ */
+.ui-select {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 12px 12px;
+}
+
+/* The native dropdown list is drawn by the OS; give it the panel colours so it
+   does not open as a white sheet over a dark workspace. */
+.ui-select option {
+  background-color: var(--popover-bg);
+  color: var(--text-main);
+}
+
+/* Chromium's native date icon defaults to black, which disappears against the
+   playground's dark control surface. A neutral light-grey icon stays legible
+   in both themes without replacing the accessible native date picker. */
+.ui-date::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(70%);
+  opacity: 0.9;
+}
+
+/**
+ * Range slider.
+ *
+ * `accent-color` tints the thumb and leaves the platform's track, so the line
+ * width control in the drawing menu opened as an olive-grey OS rail inside a
+ * dark popover. Both parts are drawn from tokens here.
+ */
+.ui-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 1.25rem;
+  background: transparent;
+  /* Chrome paints the filled part of the track from `accent-color` even when the
+     track itself is restyled, so leaving it `auto` puts the browser's blue in
+     the middle of the control. */
+  accent-color: var(--contrast-bg);
+}
+
+.ui-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border-strong);
+}
+
+.ui-range::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border-strong);
+}
+
+.ui-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -5px;
+  height: 14px;
+  width: 14px;
+  border-radius: 999px;
+  background: var(--contrast-bg);
+  border: 1px solid var(--contrast-border);
+}
+
+.ui-range::-moz-range-thumb {
+  height: 14px;
+  width: 14px;
+  border: 1px solid var(--contrast-border);
+  border-radius: 999px;
+  background: var(--contrast-bg);
+}
+
+.ui-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
