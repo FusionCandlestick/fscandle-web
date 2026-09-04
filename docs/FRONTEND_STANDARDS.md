@@ -1,7 +1,7 @@
 # FusionCandlestick Frontend & UI/UX Standards
 
-Version: 1.0.0  
-Last updated: 2026-08-30  
+Version: 1.1.0  
+Last updated: 2026-09-05  
 Status: Active Engineering & Design System Standard  
 
 ---
@@ -103,15 +103,83 @@ All color tokens are engineered for OLED and high-contrast professional monitors
 
 ---
 
-## 6. Layout Architecture & Workspace Rhythm
+## 6. Typography System
 
-### 6.1 Landing Page Showcase Grid (40% : 30% : 30%)
+One small, closed scale — six sizes, four weights, three line-heights, two
+letter-spacing values, nothing else. Snap any off-scale value to the nearest
+one rather than introducing a new number.
+
+### 6.1 Font family
+The chrome and the chart engine's Canvas rendering share one stack (system
+faces only, no web font), so a price on the axis and the same price in a
+toolbar render in one typeface on every OS:
+
+```css
+--font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+--font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+--font-display: "Outfit", var(--font-sans);   /* logo lockup only */
+```
+
+`--font-sans` resolves to San Francisco (macOS/iOS), Segoe UI (Windows), or
+Roboto (Android/ChromeOS) — zero font bytes shipped for body/UI text. `Outfit`
+is loaded via `next/font/google` and used **only** by `Wordmark`; nothing else
+opts out of the system stack. The engine's `defaultOptions.layout.fontFamily`
+(`src/model/fontFamily.ts` → `UI_FONT_FAMILY` in the `fscandle` repo) carries
+the identical string — every Canvas call site builds `ctx.font` from it rather
+than hard-coding `sans-serif`/`Arial`.
+
+### 6.2 Scale
+
+| px | role | weight | line-height | tracking |
+| ---: | --- | --- | --- | --- |
+| **10** | axis labels, tooltips, 2nd-priority table columns, uppercase micro-labels/eyebrows | 400 / 600 | 1 – 1.2 | 0 |
+| **12** | default body & UI — buttons, inputs, nav links, card descriptions, table cells | 400 / 500 / 600 | 1.2 – 1.4 | 0 |
+| **16** | long-form prose only — landing paragraphs, FAQ answers | 400 / 500 | 1.4 | 0 |
+| **24** | section H2/H3, panel titles | 600 / 800 | 1.2 | −0.02em |
+| **32** | page H1 (interior routes, `/playground`), mobile hero, large KPI numbers | 600 / 800 | 1.2 | −0.02em |
+| **48** | desktop hero H1, chart watermark | 800 | 1.2 | −0.02em |
+
+Rules:
+- **Weight 700 does not exist in this system.** A heading is 600 (subhead) or
+  800 (H1/H2) — never plain "bold". Collapse any `font-bold` you find to one
+  of the two.
+- **`line-height: 1`** is reserved for single-line numerics that must never
+  wrap — KPI digits, price pills, axis ticks, badges.
+- **Letter-spacing is 0 everywhere except headings** (24/32/48px get
+  `−0.02em`). Uppercase micro-labels intentionally get **no** positive
+  tracking token — at 10–12px with a short 2–3 word eyebrow the default
+  spacing holds up; letter-space one element inline if a specific label ever
+  reads as cramped, rather than adding a fifth tracking value.
+- CSS custom properties (`globals.css`): `--text-{10,12,16,24,32,48}`,
+  `--fw-{regular,medium,semibold,extrabold}` (400/500/600/800),
+  `--lh-{solid,dense,text}` (1/1.2/1.4), `--tracking-{title,normal}`
+  (−0.02em/0). `body { line-height: var(--lh-text) }` is the page default;
+  headings and single-line numerics override it explicitly.
+
+### 6.3 Landing chrome — light mode
+
+- **Sticky header** background is `--lp-header-bg`, a neutral grey (`#e8eaee`
+  in light mode) — never pure white, so the bar reads as its own surface
+  against the page.
+- **Page-top wash** (`--lp-page-wash`, painted behind the grid) is dark green
+  in dark mode, a neutral slate in light mode — never a colour cast bleeding
+  onto a white background. Both are theme tokens in `tokens.ts`, applied via
+  `landingThemeCssVars`.
+- **Graph-paper grid**: 60×60px cells, 1px `--lp-seam` hairlines.
+
+---
+
+## 7. Layout Architecture & Workspace Rhythm
+
+### 7.1 Landing Page Showcase Grid (40% : 30% : 30%)
 Large screens (`xl:` / `2xl:`) implement a strict 3-column proportional grid (`xl:grid-cols-[4fr_3fr_3fr]`):
-* **Column 1 (40%)**: Live Canvas Chart Canvas (`h-[280px] sm:h-[320px] min-[1000px]:h-[350px] xl:h-[360px] 2xl:h-[375px]`).
-* **Column 2 (30%)**: Text Description & Interactive Controls (`h-full flex flex-col justify-between`).
-* **Column 3 (30%)**: Concise Modern API Code Example (`h-[330px] 2xl:h-[345px]`).
+* **Column 1 (40%)**: Live Canvas chart, fixed `h-[340px]`.
+* **Column 2 (30%)**: Text description & interactive controls (`flex flex-col justify-between`).
+* **Column 3 (30%)**: API code example, fills the row height.
 
-### 6.2 Terminal Workspace Layout (`/playground`)
+The `<article>` wrapping all three columns is a fixed `xl:h-[376px] xl:overflow-hidden`, so every showcase row (`Series` / `Indicators` / `Compare` / `Drawing`) measures exactly **400px** — one height for all four, no per-section variance. See §6 for the type scale inside each column.
+
+### 7.2 Terminal Workspace Layout (`/playground`)
 The `/playground` layout implements a modular, high-density 4-zone grid:
 ```
 +-------------------------------------------------------------------------+
@@ -126,7 +194,7 @@ The `/playground` layout implements a modular, high-density 4-zone grid:
 +-------------------------------------------------------------------------+
 ```
 
-### 6.3 Subpixel Alignment
+### 7.3 Subpixel Alignment
 Translate Canvas coordinate context by `(0.5, 0.5)` for 1px line strokes to prevent blur:
 ```ts
 ctx.translate(0.5, 0.5);
@@ -134,7 +202,7 @@ ctx.translate(0.5, 0.5);
 
 ---
 
-## 7. Directory Structure
+## 8. Directory Structure
 
 ```
 src/
@@ -152,13 +220,15 @@ src/
 
 ---
 
-## 8. Review & Quality Checklist
+## 9. Review & Quality Checklist
 
-Before merging UI or chart engine changes into `FusionCandlestick`:
+Before merging UI changes into `fscandle-web`, or rendering changes into the
+`fscandle` engine:
 
 - [ ] **Curvature Check**: Do all floating containers, modals, and badges adhere to the $n=3$ order squircle geometry?
-- [ ] **Render Performance**: Does the Canvas 120 FPS loop execute without layout thrashing or garbage-collection spikes during rapid pan/zoom?
+- [ ] **Typography Check**: Does every size/weight/line-height/tracking value come from §6's closed scale — no 7th size, no 700 weight, no ad-hoc tracking?
+- [ ] **Render Performance**: Does the Canvas render loop execute without layout thrashing or garbage-collection spikes during rapid pan/zoom? (Verified by `test:perf:browser`, not eyeballed — do not claim an FPS number that test doesn't print.)
 - [ ] **Canonical Naming**: Are all data feed interfaces typed in `camelCase` without legacy snake_case leakage?
 - [ ] **Subpixel Alignment**: Are price rails, crosshairs, and candle borders rendered razor-sharp on Retina / High-DPI displays?
-- [ ] **Internationalization**: Do all toolbars and indicator names resolve through the 9-locale `i18n` dictionary?
+- [ ] **Internationalization**: Do all toolbars and indicator names resolve through the 3-locale (`en-US`/`zh-CN`/`zh-TW`) `i18n` dictionary?
 - [ ] **SEO & Structured Data**: Are all public pages enriched with standard semantic tags, Schema.org `FAQPage` / `SoftwareApplication` JSON-LD, and robots/sitemap entries?
