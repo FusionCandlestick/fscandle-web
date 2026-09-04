@@ -1,6 +1,6 @@
 # FusionCandlestick Frontend & UI/UX Standards
 
-Version: 1.1.0  
+Version: 0.1.0  
 Last updated: 2026-09-05  
 Status: Active Engineering & Design System Standard  
 
