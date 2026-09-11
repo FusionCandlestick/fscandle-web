@@ -3,10 +3,12 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
 
 import { FusionCandlestickChart, type DrawingLayer } from "fscandle";
+import { formulaIndicatorPlugin } from "./indicatorPlugins";
 import type { PriceScaleMode } from "fscandle";
 import type { KLineData } from "fscandle";
 import { THEMES, type ThemeMode } from "../ui/theme";
 import { asset } from "../lib/asset";
+import type { PersistedIndicator } from "@/store/WorkspaceStore";
 
 export type Period = "1m" | "5m" | "15m" | "30m" | "1h" | "4h" | "1d" | "1w";
 export type ChartStyle = "candle" | "hollow" | "line" | "baseline" | "area" | "ha" | "bar";
@@ -38,6 +40,9 @@ export interface ChartAdapter {
   screenshot: () => Promise<string | null>;
   setReplayRange: (startTimestamp: number, endTimestamp: number) => void;
   replayStep: () => boolean;
+  addIndicator: (name: string, options?: { paneId?: string; id?: string; calcParams?: number[]; newPane?: boolean }) => void;
+  removeIndicator: (paneId: string, indicatorId: string) => void;
+  getRegisteredIndicators: () => Array<{ shortName: string; name: string }>;
 }
 
 const PERIOD_FILES: Record<Period, string> = {
@@ -96,9 +101,11 @@ interface ChartViewportProps {
   watermarkVisible: boolean;
   drawingDefaults: DrawingDefaults;
   compareSymbols: string[];
-  chartBackground: { mode: 'solid' | 'gradient'; top: string; bottom: string };
+  chartBackground?: { mode: 'solid' | 'gradient'; top: string; bottom: string };
+  initialIndicators?: PersistedIndicator[];
   onReady: (adapter: ChartAdapter) => void;
   onDrawingEnd?: () => void;
+  onIndicatorRemoved?: (id: string) => void;
 }
 
 export function ChartViewport({
@@ -114,9 +121,12 @@ export function ChartViewport({
   drawingDefaults,
   compareSymbols,
   chartBackground,
+  initialIndicators,
   onReady,
   onDrawingEnd,
+  onIndicatorRemoved,
 }: ChartViewportProps) {
+  const initialIndicatorsRef = useRef(initialIndicators);
   const resolvedThemeMode: ThemeMode = themeMode === "light" ? "light" : "dark";
   const theme = THEMES[resolvedThemeMode];
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -129,6 +139,11 @@ export function ChartViewport({
   const latestDrawingDefaultsRef = useRef(drawingDefaults);
   const latestOnReadyRef = useRef(onReady);
   const latestOnDrawingEndRef = useRef(onDrawingEnd);
+  const latestOnIndicatorRemovedRef = useRef(onIndicatorRemoved);
+  useEffect(() => {
+    initialIndicatorsRef.current = initialIndicators;
+    latestOnIndicatorRemovedRef.current = onIndicatorRemoved;
+  }, [initialIndicators, onIndicatorRemoved]);
 
   useEffect(() => {
     latestSymbolRef.current = symbol;
@@ -175,6 +190,12 @@ export function ChartViewport({
       },
       crosshair: {
         color: theme.crosshair,
+      },
+      panes: {
+        dividerHeight: 1,
+        dividerColor: "#000000",
+        dividerHoverColor: "#000000",
+        resizable: true,
       },
       watermark: {
         visible: watermarkVisible,
@@ -233,6 +254,21 @@ export function ChartViewport({
         });
       });
     });
+    chart.useIndicatorPlugin(formulaIndicatorPlugin);
+    // Recreate persisted indicators for this panel if any
+    if (Array.isArray(initialIndicatorsRef.current) && initialIndicatorsRef.current.length > 0) {
+      initialIndicatorsRef.current.forEach((ind) => {
+        try {
+          if (ind.formula) return; // Retired free-form indicators are not executable plugins.
+          chart.createIndicator(ind.name, {
+            id: ind.id, calcParams: ind.calcParams, newPane: ind.newPane ?? true,
+          });
+        } catch (e) {
+          console.warn('Failed to restore indicator', ind, e);
+        }
+      });
+    }
+
     chart.setMagnetMode(magnetMode);
     chart.setPriceScaleMode(priceScaleMode);
     chart.setInvertScale(invertScale);
@@ -324,8 +360,24 @@ export function ChartViewport({
         replayIndex += 1;
         return replayIndex < replayData.length && replayData[replayIndex].timestamp <= replayEndTimestamp;
       },
+      addIndicator: (name, options) => {
+        chart.createIndicator(name, options);
+      },
+      removeIndicator: (paneId, indicatorId) => {
+        chart.removeIndicator(paneId, indicatorId);
+      },
+      getRegisteredIndicators: () => {
+        return chart.getRegisteredIndicatorTemplates().map(t => ({
+          shortName: t.shortName,
+          name: t.name,
+        }));
+      },
+
     };
 
+    const unsubscribeIndicator = chart.subscribe('indicatorRemoved', ({ indicatorId }) => {
+      latestOnIndicatorRemovedRef.current?.(indicatorId);
+    });
     const unsubscribeOverlay = chart.subscribeOverlayChange((params) => {
       if (params.reason === "created") {
         latestOnDrawingEndRef.current?.();
@@ -338,6 +390,7 @@ export function ChartViewport({
     return () => {
       disposed = true;
       unsubscribeOverlay();
+      unsubscribeIndicator();
       chart.destroy();
       chartRef.current = null;
     };
@@ -380,7 +433,7 @@ export function ChartViewport({
   }, [drawingDefaults]);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || !chartBackground) return;
     containerRef.current.style.background = chartBackground.mode === 'gradient'
       ? `linear-gradient(to bottom, ${chartBackground.top}, ${chartBackground.bottom})`
       : chartBackground.top;

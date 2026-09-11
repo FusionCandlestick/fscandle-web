@@ -1,9 +1,18 @@
+export interface PersistedIndicator {
+  id: string;
+  name: string;
+  newPane?: boolean;
+  calcParams?: number[];
+  formula?: string;
+}
+
 export interface WorkspaceState {
   watchlist: string[];
   panelSymbols: string[];
   recentSymbols: string[];
   activePanelIndex: number;
   panelCompareSymbols: string[][];
+  panelIndicators: PersistedIndicator[][];
 }
 
 const WORKSPACE_STORAGE_KEY = "fscandle_workspace_state_v2";
@@ -56,6 +65,16 @@ const normalizePanelCompareSymbols = (panelCompareSymbols: string[][] | undefine
   return next;
 };
 
+const DEFAULT_PANEL_INDICATORS: PersistedIndicator[][] = [[], [], [], []];
+
+const normalizePanelIndicators = (panelIndicators?: PersistedIndicator[][]): PersistedIndicator[][] => {
+  return Array.from({ length: PANEL_COUNT }, (_, index) => {
+    const list = panelIndicators?.[index];
+    if (!Array.isArray(list)) return [];
+    return list.filter((item): item is PersistedIndicator => Boolean(item && typeof item.id === 'string' && typeof item.name === 'string' && !item.formula));
+  });
+};
+
 export function createDefaultWorkspaceState(): WorkspaceState {
   return {
     watchlist: [...DEFAULT_WATCHLIST],
@@ -63,6 +82,7 @@ export function createDefaultWorkspaceState(): WorkspaceState {
     recentSymbols: [DEFAULT_PANEL_SYMBOLS[0]],
     activePanelIndex: 0,
     panelCompareSymbols: DEFAULT_COMPARE_SYMBOLS.map((symbols) => [...symbols]),
+    panelIndicators: DEFAULT_PANEL_INDICATORS.map((items) => [...items]),
   };
 }
 
@@ -85,6 +105,7 @@ export function normalizeWorkspaceState(
     recentSymbols: uniqueSymbolList([...(state?.recentSymbols ?? []), panelSymbols[activePanelIndex]]).slice(0, MAX_RECENT_SYMBOLS),
     activePanelIndex,
     panelCompareSymbols: normalizePanelCompareSymbols(state?.panelCompareSymbols, panelSymbols),
+    panelIndicators: normalizePanelIndicators(state?.panelIndicators),
   };
 }
 

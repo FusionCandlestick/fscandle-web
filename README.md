@@ -15,12 +15,26 @@ npm run dev
 ```
 
 The `fscandle` engine is a normal npm dependency (`fscandle@^0.1.0`). To develop
-against a local checkout of the engine instead, `npm link` it:
+against a local checkout, build and install a local package (this also avoids
+Turbopack's project-root restrictions on sibling-directory symlinks):
 
 ```bash
-cd ../fscandle && npm run build:library && npm link
-cd ../fscandle-web && npm link fscandle
+cd ../fscandle
+npm run build:library
+npm pack --ignore-scripts --pack-destination /tmp
+cd ../fscandle-web
+npm install --no-save --package-lock=false /tmp/fscandle-0.1.0.tgz
 ```
+
+Repeat after engine changes and restart the dev server. `npm ci` restores the
+published dependency. The indicator plugin API and `indicatorRemoved` event in
+this workspace require the corresponding local engine build until it is released.
+
+The indicator library uses compiled templates in
+`src/app/playground/indicatorPlugins.ts`, installed through `useIndicatorPlugin`.
+The retired free-form editor is no longer executed; legacy formula records are
+filtered when restoring a workspace. Plugin instances can be removed from the
+chart legend, including their persisted workspace entries.
 
 ## Deploy
 

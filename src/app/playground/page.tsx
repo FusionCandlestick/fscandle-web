@@ -27,8 +27,10 @@ import {
   TrendingUp,
   MoveHorizontal,
   Eraser,
+  BarChart2,
 } from "lucide-react";
 
+import { IndicatorLibraryModal } from "./IndicatorLibraryModal";
 import type { PriceScaleMode } from "fscandle";
 import type { DrawingLayer } from "fscandle";
 import {
@@ -39,6 +41,7 @@ import {
   saveWorkspaceState,
   uniqueSymbolList,
   type WorkspaceState,
+  type PersistedIndicator,
 } from "@/store/WorkspaceStore";
 import { THEMES, themeCssVars, type ThemeMode } from "../ui/theme";
 import {
@@ -70,6 +73,148 @@ type LayoutMode = "single" | "split-horizontal" | "split-vertical" | "quad-horiz
 const PERIODS: Period[] = ["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w"];
 const DRAWING_COLORS = ["#2962FF", "#F59E0B", "#10B981", "#EF4444", "#8B5CF6", "#F8FAFC"];
 const EMPTY_COMPARE_SYMBOLS: string[] = [];
+
+export interface IndicatorMeta {
+  id: string;
+  name: string;
+  category: "overlay" | "subpane";
+  defaultParams: string;
+  desc: string;
+  author?: string;
+}
+
+const INDICATOR_CATALOG: IndicatorMeta[] = [
+  // --- Main Chart Overlays ---
+  {
+    id: "MA",
+    name: "Moving Average",
+    category: "overlay",
+    defaultParams: "20",
+    desc: "Simple moving average plotted directly over candlestick prices.",
+    author: "Built-in",
+  },
+  {
+    id: "EMA",
+    name: "Exponential Moving Average",
+    category: "overlay",
+    defaultParams: "20",
+    desc: "Weights recent price points more heavily for faster trend identification.",
+    author: "Built-in",
+  },
+  {
+    id: "BOLL",
+    name: "Bollinger Bands",
+    category: "overlay",
+    defaultParams: "20, 2",
+    desc: "Upper and lower standard deviation bands measuring market volatility.",
+    author: "Built-in",
+  },
+  {
+    id: "PSAR",
+    name: "Parabolic SAR",
+    category: "overlay",
+    defaultParams: "0.02, 0.2",
+    desc: "Stop and reverse points plotted on candles to capture trailing momentum.",
+    author: "Built-in",
+  },
+  {
+    id: "VWAP",
+    name: "Volume Weighted Avg Price",
+    category: "overlay",
+    defaultParams: "Session",
+    desc: "Benchmark giving the average price a security traded at based on volume.",
+    author: "Built-in",
+  },
+  // --- Subpane Oscillators ---
+  {
+    id: "RSI",
+    name: "Relative Strength Index",
+    category: "subpane",
+    defaultParams: "14",
+    desc: "Momentum oscillator measuring speed and change of price moves (0–100).",
+    author: "Built-in",
+  },
+  {
+    id: "MACD",
+    name: "Moving Average Conv / Div",
+    category: "subpane",
+    defaultParams: "12, 26, 9",
+    desc: "Trend-following momentum indicator showing relationship between two EMAs.",
+    author: "Built-in",
+  },
+  {
+    id: "KDJ",
+    name: "KDJ Stochastic Oscillator",
+    category: "subpane",
+    defaultParams: "9, 3, 3",
+    desc: "Comprehensive momentum indicator derived from slow stochastic lines.",
+    author: "Built-in",
+  },
+  {
+    id: "VOLMA",
+    name: "Volume Moving Average",
+    category: "subpane",
+    defaultParams: "20",
+    desc: "Displays trading volume bars with moving average overlay.",
+    author: "Built-in",
+  },
+  {
+    id: "ATR",
+    name: "Average True Range",
+    category: "subpane",
+    defaultParams: "14",
+    desc: "Measures market volatility by decomposing the entire range of an asset.",
+    author: "Built-in",
+  },
+  {
+    id: "WR",
+    name: "Williams %R",
+    category: "subpane",
+    defaultParams: "14",
+    desc: "Momentum indicator measuring overbought and oversold levels (-100 to 0).",
+    author: "Built-in",
+  },
+  {
+    id: "CCI",
+    name: "Commodity Channel Index",
+    category: "subpane",
+    defaultParams: "20",
+    desc: "Versatile oscillator used to identify new trends or extreme conditions.",
+    author: "Built-in",
+  },
+  {
+    id: "ROC",
+    name: "Rate of Change",
+    category: "subpane",
+    defaultParams: "12",
+    desc: "Pure momentum oscillator measuring percentage change between bars.",
+    author: "Built-in",
+  },
+  {
+    id: "ADX",
+    name: "Average Directional Index",
+    category: "subpane",
+    defaultParams: "14",
+    desc: "Quantifies trend strength regardless of trend direction.",
+    author: "Built-in",
+  },
+  {
+    id: "OBV",
+    name: "On-Balance Volume",
+    category: "subpane",
+    defaultParams: "Cumulative",
+    desc: "Uses volume flow to predict changes in stock price momentum.",
+    author: "Built-in",
+  },
+  {
+    id: "STOCHRSI",
+    name: "Stochastic RSI",
+    category: "subpane",
+    defaultParams: "14, 14, 3, 3",
+    desc: "Applies the Stochastic formula to RSI values rather than standard prices.",
+    author: "Built-in",
+  },
+];
 
 const DRAWING_TOOLS = [
   {
@@ -181,7 +326,8 @@ const equalWorkspaceState = (left: WorkspaceState, right: WorkspaceState) => {
     && equalStringArrays(left.watchlist, right.watchlist)
     && equalStringArrays(left.panelSymbols, right.panelSymbols)
     && equalStringArrays(left.recentSymbols, right.recentSymbols)
-    && equalStringMatrix(left.panelCompareSymbols, right.panelCompareSymbols);
+    && equalStringMatrix(left.panelCompareSymbols, right.panelCompareSymbols)
+    && JSON.stringify(left.panelIndicators) === JSON.stringify(right.panelIndicators);
 };
 
 export default function PlaygroundPage() {
@@ -197,6 +343,7 @@ export default function PlaygroundPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [showStyleMenu, setShowStyleMenu] = useState(false);
   const [showSymbolMenu, setShowSymbolMenu] = useState(false);
+  const [showIndicatorModal, setShowIndicatorModal] = useState(false);
   const [isCompactViewport, setIsCompactViewport] = useState(false);
   const [openSidebarTool, setOpenSidebarTool] = useState<string | null>(null);
   const [workspaceState, setWorkspaceState] = useState<WorkspaceState>(() => createDefaultWorkspaceState());
@@ -232,11 +379,26 @@ export default function PlaygroundPage() {
   const layoutClasses = useMemo(() => {
     const map: Record<LayoutMode, string[]> = {
       single: ["w-full h-full"],
-      "split-horizontal": ["w-1/2 h-full", "w-1/2 h-full"],
-      "split-vertical": ["w-full h-1/2", "w-full h-1/2"],
-      "quad-horizontal": ["w-1/4 h-full", "w-1/4 h-full", "w-1/4 h-full", "w-1/4 h-full"],
-      "quad-vertical": ["w-full h-1/4", "w-full h-1/4", "w-full h-1/4", "w-full h-1/4"],
-      "quad-grid": ["w-1/2 h-1/2", "w-1/2 h-1/2", "w-1/2 h-1/2", "w-1/2 h-1/2"],
+      "split-horizontal": ["w-[calc(50%-0.5px)] h-full", "w-[calc(50%-0.5px)] h-full"],
+      "split-vertical": ["w-full h-[calc(50%-0.5px)]", "w-full h-[calc(50%-0.5px)]"],
+      "quad-horizontal": [
+        "w-[calc(25%-0.75px)] h-full",
+        "w-[calc(25%-0.75px)] h-full",
+        "w-[calc(25%-0.75px)] h-full",
+        "w-[calc(25%-0.75px)] h-full",
+      ],
+      "quad-vertical": [
+        "w-full h-[calc(25%-0.75px)]",
+        "w-full h-[calc(25%-0.75px)]",
+        "w-full h-[calc(25%-0.75px)]",
+        "w-full h-[calc(25%-0.75px)]",
+      ],
+      "quad-grid": [
+        "w-[calc(50%-0.5px)] h-[calc(50%-0.5px)]",
+        "w-[calc(50%-0.5px)] h-[calc(50%-0.5px)]",
+        "w-[calc(50%-0.5px)] h-[calc(50%-0.5px)]",
+        "w-[calc(50%-0.5px)] h-[calc(50%-0.5px)]",
+      ],
     };
     return map[layout];
   }, [layout]);
@@ -449,6 +611,18 @@ export default function PlaygroundPage() {
     // the event layer that receives the next pointer event owns the tool.
     queueMicrotask(() => applyToVisible((adapter) => adapter.startDrawing(toolId)));
   };
+  const addPanelIndicator = (indicator: PersistedIndicator) => {
+    updateWorkspaceState((current) => {
+      const nextIndicators = current.panelIndicators.map((list, idx) => {
+        if (layout === "single" ? idx === 0 : idx === activePanelIndex) {
+          return [...list, indicator];
+        }
+        return list;
+      });
+      return { ...current, panelIndicators: nextIndicators };
+    });
+  };
+
   const setActivePanel = (panelIndex: number) => {
     if (activePanelIndex === panelIndex) {
       return;
@@ -817,6 +991,26 @@ export default function PlaygroundPage() {
             <option value="ha">Heikin</option>
             <option value="bar">Bar</option>
           </select>
+
+          {/* Indicators Modal Trigger Button */}
+          <button
+            type="button"
+            onClick={() => {
+              setShowIndicatorModal(true);
+              setShowSettings(false);
+              setShowStyleMenu(false);
+              setShowSymbolMenu(false);
+            }}
+            className={`flex items-center gap-1.5 h-8 px-2.5 rounded-md border text-xs font-semibold transition-all duration-150 ${
+              showIndicatorModal
+                ? "border-blue-500 bg-blue-600 text-white"
+                : "border-[color:var(--border)] bg-[var(--control-bg)] text-[color:var(--text-main)] hover:bg-[var(--control-hover-bg)]"
+            }`}
+            title="Indicators & Custom Formulas"
+          >
+            <BarChart2 size={14} className="shrink-0" />
+            <span>Indicators</span>
+          </button>
 
           {/* Active Comparison Chips in Top Toolbar */}
           {canUseCompareSeries && compareSymbols.length > 0 && (
@@ -1251,7 +1445,7 @@ export default function PlaygroundPage() {
           </div>
         </aside>
 
-        <div className="flex-1 min-w-0 bg-[var(--content-bg)] flex flex-wrap gap-0 overflow-hidden">
+        <div className="flex-1 min-w-0 bg-black flex flex-wrap gap-[1px] overflow-hidden">
           {layoutClasses.map((className, index) => (
             <div
               key={`${layout}-${index}`}
@@ -1264,9 +1458,9 @@ export default function PlaygroundPage() {
                 }
                 setActivePanel(index);
               }}
-              className={`${className} ${surface.panel} relative overflow-hidden ${activePanelIndex === index ? "ring-1 ring-blue-500/80" : ""}`}
+              className={`${className} bg-[var(--panel-bg)] border-none relative overflow-hidden ${activePanelIndex === index ? "ring-1 ring-blue-500/80" : ""}`}
             >
-              <div className="absolute bottom-0 right-0 z-30 flex h-[22px] w-[55px] items-center justify-center pointer-events-none">
+              <div className="absolute bottom-0 right-0 z-[3000] flex h-[22px] w-[55px] items-center justify-center pointer-events-none">
                 <button
                   type="button"
                   onClick={(e) => {
@@ -1287,6 +1481,7 @@ export default function PlaygroundPage() {
               <span className="sr-only">P{index + 1} · {panelSymbols[index]}</span>
 
               <ChartViewport
+                key={`${index}-${hasHydratedWorkspace}`}
                 symbol={panelSymbols[index]}
                 period={period}
                 activeTool={activeTool}
@@ -1299,6 +1494,11 @@ export default function PlaygroundPage() {
                 drawingDefaults={drawingDefaults}
                 compareSymbols={canUseCompareSeries ? (panelCompareSymbols[index] ?? EMPTY_COMPARE_SYMBOLS) : EMPTY_COMPARE_SYMBOLS}
                 chartBackground={chartBackground}
+                initialIndicators={workspaceState.panelIndicators?.[index]}
+                onIndicatorRemoved={(id) => updateWorkspaceState(current => ({
+                  ...current,
+                  panelIndicators: current.panelIndicators.map((list, panelIndex) => panelIndex === index ? list.filter(item => item.id !== id) : list),
+                }))}
                 onDrawingEnd={() => setActiveTool(undefined)}
                 onReady={(adapter) => {
                   if (layout === "single" && index === 0) {
@@ -1317,6 +1517,23 @@ export default function PlaygroundPage() {
           ))}
         </div>
       </div>
+
+      {showIndicatorModal && (
+        <IndicatorLibraryModal
+          catalog={INDICATOR_CATALOG}
+          onClose={() => setShowIndicatorModal(false)}
+          onAdd={(names) => {
+            const adapter = layout === "single" ? mainAdapter.current : [panel1.current, panel2.current, panel3.current, panel4.current][activePanelIndex];
+            if (!adapter) throw new Error("Chart is not ready");
+            for (const name of names) {
+              const meta = INDICATOR_CATALOG.find(item => item.id === name);
+              const indicator = { id: `${name.toLowerCase()}_${crypto.randomUUID()}`, name, newPane: meta?.category !== "overlay" };
+              adapter.addIndicator(name, { id: indicator.id, newPane: indicator.newPane });
+              addPanelIndicator(indicator);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
