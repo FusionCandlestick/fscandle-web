@@ -10,14 +10,15 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "build": "next build --webpack",
+    "start": "node scripts/serve-export.mjs",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "capture:media": "node scripts/capture-media.mjs",
     "test:e2e": "playwright test",
     "test:e2e:update": "playwright test --update-snapshots",
-    "test:perf:browser": "node tests/performance/browser-frame-benchmark.mjs"
+    "test:perf:browser": "node tests/performance/browser-frame-benchmark.mjs",
+    "test:unit": "node --test tests/unit/*.test.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

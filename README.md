@@ -38,7 +38,7 @@ chart legend, including their persisted workspace entries.
 
 ## Deploy
 
-`next.config.ts` sets `output: "export"`. Pushing to `main` runs
+`next.config.ts` sets `output: "export"`. The build script selects Next.js's supported Webpack compiler; this avoids the Turbopack/PostCSS internal-port failure reproduced during the architecture review. Pushing to `main` runs
 `.github/workflows/deploy.yml`, which builds with
 `NEXT_PUBLIC_BASE_PATH=/fscandle-web` and publishes `out/` to GitHub Pages at
 `https://fusioncandlestick.github.io/fscandle-web/`. Point `fetch()` targets and
@@ -51,6 +51,8 @@ Drop `NEXT_PUBLIC_BASE_PATH` once the site moves to a custom domain.
 | --- | --- |
 | `npm run dev` | Next dev server |
 | `npm run build` | static export to `out/` |
+| `npm start` | Preview the built static export on loopback; set the same `NEXT_PUBLIC_BASE_PATH` as at build time |
+| `npm run test:unit` | Static export route and filesystem boundary tests |
 | `npm run lint` | ESLint (eslint-config-next) |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run test:e2e` | Playwright — routes, gestures, screenshot regression |

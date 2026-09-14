@@ -30,7 +30,7 @@ const THRESHOLDS = {
 };
 
 const startServer = async () => {
-  const server = spawn('npx', ['next', 'start', '--hostname', '127.0.0.1', '--port', String(PORT)], {
+  const server = spawn(process.execPath, ['scripts/serve-export.mjs', '--hostname', '127.0.0.1', '--port', String(PORT)], {
     stdio: 'ignore',
   });
   const deadline = Date.now() + 60_000;
