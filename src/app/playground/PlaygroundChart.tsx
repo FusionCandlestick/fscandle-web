@@ -165,6 +165,11 @@ export function ChartViewport({
       toolbar: {
         visible: false,
       },
+      // exchangeWallClockTimestamp encodes the exchange clock as UTC, so labels
+      // must render in UTC too; the browser's zone would shift every bar.
+      localization: {
+        timeZone: "UTC",
+      },
       layout: {
         background: { color: theme.chartBg },
         textColor: theme.axisText,
