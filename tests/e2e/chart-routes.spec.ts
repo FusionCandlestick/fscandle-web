@@ -1,12 +1,5 @@
 import { expect, test } from '@playwright/test';
-
-const waitForCanvasSurface = async (page: import('@playwright/test').Page) => {
-  await page.waitForSelector('canvas');
-  await page.waitForFunction(() => {
-    const canvases = [...document.querySelectorAll('canvas')];
-    return canvases.length > 0 && canvases.some(canvas => canvas.width > 0 && canvas.height > 0);
-  });
-};
+import { chartRect, openFresh, waitForCanvas } from './helpers';
 
 const countMainOverlayPixels = async (page: import('@playwright/test').Page) => page.locator('canvas').evaluateAll(canvases => {
   const candidates = canvases
@@ -54,17 +47,14 @@ const getStoredActiveOverlays = async (page: import('@playwright/test').Page) =>
 test.describe('chart routes', () => {
   test('home route renders a nonblank chart and crosshair surface', async ({ page }) => {
     await page.goto('/');
-    await waitForCanvasSurface(page);
+    await waitForCanvas(page);
     await page.mouse.move(720, 420);
     await expect.poll(() => page.locator('canvas').count()).toBeGreaterThan(0);
   });
 
   test('playground route exposes the workspace shell controls', async ({ page }, testInfo) => {
-    await page.goto('/playground');
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
+    await openFresh(page);
     await expect(page.getByPlaceholder('Symbol', { exact: true })).toHaveValue('SPY');
-    await waitForCanvasSurface(page);
     await page.getByTitle('Chart Style').selectOption('area');
     await page.getByTitle('Chart Settings').click();
     await expect(page.getByTestId('settings-menu')).toBeVisible();
@@ -87,10 +77,7 @@ test.describe('chart routes', () => {
   });
 
   test('playground symbol picker combines search results and watchlist', async ({ page }) => {
-    await page.goto('/playground');
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
-    await waitForCanvasSurface(page);
+    await openFresh(page);
 
     await page.getByPlaceholder('Symbol', { exact: true }).click();
     await expect(page.getByTestId('symbol-picker-menu')).toBeVisible();
@@ -108,10 +95,7 @@ test.describe('chart routes', () => {
   });
 
   test('playground watchlist targets the active panel', async ({ page }) => {
-    await page.goto('/playground');
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
-    await waitForCanvasSurface(page);
+    await openFresh(page);
 
     await page.getByTitle('Chart Settings').click();
     await page.locator('[data-layout-mode="split-horizontal"]').click();
@@ -132,10 +116,7 @@ test.describe('chart routes', () => {
   });
 
   test('playground compare series lives in the symbol picker and is single-panel only', async ({ page }) => {
-    await page.goto('/playground');
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
-    await waitForCanvasSurface(page);
+    await openFresh(page);
 
     // Compare lines are added from the symbol picker, one per row.
     await page.getByPlaceholder('Symbol', { exact: true }).click();
@@ -152,10 +133,7 @@ test.describe('chart routes', () => {
   });
 
   test('playground custom popovers dismiss when clicking elsewhere', async ({ page }) => {
-    await page.goto('/playground');
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
-    await waitForCanvasSurface(page);
+    await openFresh(page);
 
     await page.getByTitle('Chart Settings').click();
     await expect(page.getByTestId('settings-menu')).toBeVisible();
@@ -176,10 +154,7 @@ test.describe('chart routes', () => {
   });
 
   test('playground settings controls and split layouts are actionable', async ({ page }) => {
-    await page.goto('/playground');
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
-    await waitForCanvasSurface(page);
+    await openFresh(page);
 
     await page.getByTitle('Chart Settings').click();
     await expect(page.getByTestId('settings-menu')).toBeVisible();
@@ -244,27 +219,15 @@ test.describe('chart routes', () => {
   });
 
   test('playground drawing tools render immediately and undo cleanly', async ({ page }) => {
-    await page.goto('/playground');
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
-    await waitForCanvasSurface(page);
+    await openFresh(page);
 
     await page.locator('[data-sidebar-drawing-tool="line:trend"]').click();
     await page.getByTestId('sidebar-line-menu').locator('[data-sidebar-drawing-tool="line:trend"]').click();
 
-    const chartRect = await page.locator('canvas').evaluateAll(canvases => {
-      const largest = canvases
-        .map(canvas => {
-          const rect = canvas.getBoundingClientRect();
-          return { left: rect.left, top: rect.top, width: rect.width, height: rect.height, area: rect.width * rect.height };
-        })
-        .sort((a, b) => b.area - a.area)[0];
-      if (!largest) throw new Error('No canvas found');
-      return largest;
-    });
+    const rect = await chartRect(page);
 
-    await page.mouse.click(chartRect.left + chartRect.width * 0.25, chartRect.top + chartRect.height * 0.35);
-    await page.mouse.click(chartRect.left + chartRect.width * 0.55, chartRect.top + chartRect.height * 0.55);
+    await page.mouse.click(rect.left + rect.width * 0.25, rect.top + rect.height * 0.35);
+    await page.mouse.click(rect.left + rect.width * 0.55, rect.top + rect.height * 0.55);
 
     await expect.poll(async () => page.evaluate(() => {
       const state = JSON.parse(localStorage.getItem('fscandle_chart_state_v4') || '{}');
@@ -280,7 +243,7 @@ test.describe('chart routes', () => {
     })).toBe('line');
     await expect.poll(async () => countMainOverlayPixels(page)).toBeGreaterThan(0);
 
-    await page.mouse.move(chartRect.left + chartRect.width * 0.75, chartRect.top + chartRect.height * 0.25);
+    await page.mouse.move(rect.left + rect.width * 0.75, rect.top + rect.height * 0.25);
     await expect.poll(async () => countMainOverlayPixels(page)).toBeGreaterThan(0);
 
     await page.getByTitle('Undo').click();
@@ -289,10 +252,10 @@ test.describe('chart routes', () => {
 
     await page.locator('[data-sidebar-drawing-tool="wave:three"]').click();
     await page.getByTestId('sidebar-wave-menu').locator('[data-sidebar-drawing-tool="wave:abcd"]').click();
-    await page.mouse.click(chartRect.left + chartRect.width * 0.22, chartRect.top + chartRect.height * 0.56);
-    await page.mouse.click(chartRect.left + chartRect.width * 0.36, chartRect.top + chartRect.height * 0.34);
-    await page.mouse.click(chartRect.left + chartRect.width * 0.51, chartRect.top + chartRect.height * 0.62);
-    await page.mouse.click(chartRect.left + chartRect.width * 0.67, chartRect.top + chartRect.height * 0.38);
+    await page.mouse.click(rect.left + rect.width * 0.22, rect.top + rect.height * 0.56);
+    await page.mouse.click(rect.left + rect.width * 0.36, rect.top + rect.height * 0.34);
+    await page.mouse.click(rect.left + rect.width * 0.51, rect.top + rect.height * 0.62);
+    await page.mouse.click(rect.left + rect.width * 0.67, rect.top + rect.height * 0.38);
     await expect.poll(async () => (await getStoredActiveOverlays(page))[0]?.type ?? '').toBe('wave');
     await expect.poll(async () => (await getStoredActiveOverlays(page))[0]?.wave?.kind ?? '').toBe('abcd');
     await expect.poll(async () => (await getStoredActiveOverlays(page))[0]?.points?.length ?? 0).toBe(4);

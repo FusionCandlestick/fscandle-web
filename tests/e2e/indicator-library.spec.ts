@@ -1,11 +1,7 @@
 import { expect, test } from '@playwright/test';
+import { openFresh } from './helpers';
 
-test.beforeEach(async ({ page }) => {
-  await page.goto('/playground');
-  await page.evaluate(() => localStorage.clear());
-  await page.reload();
-  await expect(page.locator('canvas').first()).toBeVisible();
-});
+test.beforeEach(async ({ page }) => openFresh(page));
 const openLibrary = async (page: import('@playwright/test').Page) => {
   await page.getByRole('button', { name: /^Indicators/ }).click();
   return page.getByRole('dialog', { name: 'Indicators & Strategies' });
