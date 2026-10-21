@@ -208,6 +208,23 @@ function createSegmentedRenderer(theme: LandingThemeTokens) {
         ? phases
         : [{ fromIndex: 0, toIndex: data.length - 1, style: "candle" as ChartStyle }];
 
+    const strokeRange = (from: number, to: number, color: string, lineWidth: number, stepped = false) => {
+      ctx.beginPath();
+      for (let i = from; i <= to; i++) {
+        const x = indexToX(i);
+        const y = priceToY(data[i].close);
+        if (i === from) {
+          ctx.moveTo(x, y);
+        } else {
+          if (stepped) ctx.lineTo(x, priceToY(data[i - 1].close));
+          ctx.lineTo(x, y);
+        }
+      }
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lineWidth;
+      ctx.stroke();
+    };
+
     activePhases.forEach((phase, phaseIdx) => {
       const from = Math.max(0, Math.min(data.length - 1, phase.fromIndex));
       const to = Math.max(0, Math.min(data.length - 1, phase.toIndex));
@@ -371,44 +388,12 @@ function createSegmentedRenderer(theme: LandingThemeTokens) {
         ctx.fillStyle = grad;
         ctx.fill();
 
-        ctx.beginPath();
-        for (let i = from; i <= to; i++) {
-          const x = indexToX(i);
-          const y = priceToY(data[i].close);
-          if (i === from) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.strokeStyle = "#a855f7";
-        ctx.lineWidth = 2.2;
-        ctx.stroke();
+        strokeRange(from, to, "#a855f7", 2.2);
       } else if (style === "step") {
-        ctx.beginPath();
-        for (let i = from; i <= to; i++) {
-          const x = indexToX(i);
-          const y = priceToY(data[i].close);
-          if (i === from) {
-            ctx.moveTo(x, y);
-          } else {
-            const prevY = priceToY(data[i - 1].close);
-            ctx.lineTo(x, prevY);
-            ctx.lineTo(x, y);
-          }
-        }
-        ctx.strokeStyle = "#f59e0b";
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        strokeRange(from, to, "#f59e0b", 2, true);
       } else {
         // Line
-        ctx.beginPath();
-        for (let i = from; i <= to; i++) {
-          const x = indexToX(i);
-          const y = priceToY(data[i].close);
-          if (i === from) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.strokeStyle = lineColor;
-        ctx.lineWidth = 2.2;
-        ctx.stroke();
+        strokeRange(from, to, lineColor, 2.2);
       }
 
       // Draw subtle phase boundary line + label

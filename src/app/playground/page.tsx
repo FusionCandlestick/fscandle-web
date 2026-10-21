@@ -83,137 +83,58 @@ export interface IndicatorMeta {
   author?: string;
 }
 
+type BuiltInIndicatorRow = [id: string, name: string, defaultParams: string, desc: string];
+
+function builtInIndicators(category: IndicatorMeta["category"], rows: BuiltInIndicatorRow[]): IndicatorMeta[] {
+  return rows.map(([id, name, defaultParams, desc]) => ({
+    id,
+    name,
+    category,
+    defaultParams,
+    desc,
+    author: "Built-in",
+  }));
+}
+
 const INDICATOR_CATALOG: IndicatorMeta[] = [
   // --- Main Chart Overlays ---
-  {
-    id: "MA",
-    name: "Moving Average",
-    category: "overlay",
-    defaultParams: "20",
-    desc: "Simple moving average plotted directly over candlestick prices.",
-    author: "Built-in",
-  },
-  {
-    id: "EMA",
-    name: "Exponential Moving Average",
-    category: "overlay",
-    defaultParams: "20",
-    desc: "Weights recent price points more heavily for faster trend identification.",
-    author: "Built-in",
-  },
-  {
-    id: "BOLL",
-    name: "Bollinger Bands",
-    category: "overlay",
-    defaultParams: "20, 2",
-    desc: "Upper and lower standard deviation bands measuring market volatility.",
-    author: "Built-in",
-  },
-  {
-    id: "PSAR",
-    name: "Parabolic SAR",
-    category: "overlay",
-    defaultParams: "0.02, 0.2",
-    desc: "Stop and reverse points plotted on candles to capture trailing momentum.",
-    author: "Built-in",
-  },
-  {
-    id: "VWAP",
-    name: "Volume Weighted Avg Price",
-    category: "overlay",
-    defaultParams: "Session",
-    desc: "Benchmark giving the average price a security traded at based on volume.",
-    author: "Built-in",
-  },
+  ...builtInIndicators("overlay", [
+    ["MA", "Moving Average", "20",
+      "Simple moving average plotted directly over candlestick prices."],
+    ["EMA", "Exponential Moving Average", "20",
+      "Weights recent price points more heavily for faster trend identification."],
+    ["BOLL", "Bollinger Bands", "20, 2",
+      "Upper and lower standard deviation bands measuring market volatility."],
+    ["PSAR", "Parabolic SAR", "0.02, 0.2",
+      "Stop and reverse points plotted on candles to capture trailing momentum."],
+    ["VWAP", "Volume Weighted Avg Price", "Session",
+      "Benchmark giving the average price a security traded at based on volume."],
+  ]),
   // --- Subpane Oscillators ---
-  {
-    id: "RSI",
-    name: "Relative Strength Index",
-    category: "subpane",
-    defaultParams: "14",
-    desc: "Momentum oscillator measuring speed and change of price moves (0–100).",
-    author: "Built-in",
-  },
-  {
-    id: "MACD",
-    name: "Moving Average Conv / Div",
-    category: "subpane",
-    defaultParams: "12, 26, 9",
-    desc: "Trend-following momentum indicator showing relationship between two EMAs.",
-    author: "Built-in",
-  },
-  {
-    id: "KDJ",
-    name: "KDJ Stochastic Oscillator",
-    category: "subpane",
-    defaultParams: "9, 3, 3",
-    desc: "Comprehensive momentum indicator derived from slow stochastic lines.",
-    author: "Built-in",
-  },
-  {
-    id: "VOLMA",
-    name: "Volume Moving Average",
-    category: "subpane",
-    defaultParams: "20",
-    desc: "Displays trading volume bars with moving average overlay.",
-    author: "Built-in",
-  },
-  {
-    id: "ATR",
-    name: "Average True Range",
-    category: "subpane",
-    defaultParams: "14",
-    desc: "Measures market volatility by decomposing the entire range of an asset.",
-    author: "Built-in",
-  },
-  {
-    id: "WR",
-    name: "Williams %R",
-    category: "subpane",
-    defaultParams: "14",
-    desc: "Momentum indicator measuring overbought and oversold levels (-100 to 0).",
-    author: "Built-in",
-  },
-  {
-    id: "CCI",
-    name: "Commodity Channel Index",
-    category: "subpane",
-    defaultParams: "20",
-    desc: "Versatile oscillator used to identify new trends or extreme conditions.",
-    author: "Built-in",
-  },
-  {
-    id: "ROC",
-    name: "Rate of Change",
-    category: "subpane",
-    defaultParams: "12",
-    desc: "Pure momentum oscillator measuring percentage change between bars.",
-    author: "Built-in",
-  },
-  {
-    id: "ADX",
-    name: "Average Directional Index",
-    category: "subpane",
-    defaultParams: "14",
-    desc: "Quantifies trend strength regardless of trend direction.",
-    author: "Built-in",
-  },
-  {
-    id: "OBV",
-    name: "On-Balance Volume",
-    category: "subpane",
-    defaultParams: "Cumulative",
-    desc: "Uses volume flow to predict changes in stock price momentum.",
-    author: "Built-in",
-  },
-  {
-    id: "STOCHRSI",
-    name: "Stochastic RSI",
-    category: "subpane",
-    defaultParams: "14, 14, 3, 3",
-    desc: "Applies the Stochastic formula to RSI values rather than standard prices.",
-    author: "Built-in",
-  },
+  ...builtInIndicators("subpane", [
+    ["RSI", "Relative Strength Index", "14",
+      "Momentum oscillator measuring speed and change of price moves (0–100)."],
+    ["MACD", "Moving Average Conv / Div", "12, 26, 9",
+      "Trend-following momentum indicator showing relationship between two EMAs."],
+    ["KDJ", "KDJ Stochastic Oscillator", "9, 3, 3",
+      "Comprehensive momentum indicator derived from slow stochastic lines."],
+    ["VOLMA", "Volume Moving Average", "20",
+      "Displays trading volume bars with moving average overlay."],
+    ["ATR", "Average True Range", "14",
+      "Measures market volatility by decomposing the entire range of an asset."],
+    ["WR", "Williams %R", "14",
+      "Momentum indicator measuring overbought and oversold levels (-100 to 0)."],
+    ["CCI", "Commodity Channel Index", "20",
+      "Versatile oscillator used to identify new trends or extreme conditions."],
+    ["ROC", "Rate of Change", "12",
+      "Pure momentum oscillator measuring percentage change between bars."],
+    ["ADX", "Average Directional Index", "14",
+      "Quantifies trend strength regardless of trend direction."],
+    ["OBV", "On-Balance Volume", "Cumulative",
+      "Uses volume flow to predict changes in stock price momentum."],
+    ["STOCHRSI", "Stochastic RSI", "14, 14, 3, 3",
+      "Applies the Stochastic formula to RSI values rather than standard prices."],
+  ]),
 ];
 
 const DRAWING_TOOLS = [
@@ -762,6 +683,67 @@ export default function PlaygroundPage() {
     event.target.value = "";
   };
 
+  const renderSymbolRow = (item: SymbolCatalogEntry, inWatchlist: boolean) => {
+    const isWatched = inWatchlist || watchlistSymbols.includes(item.symbol);
+    const isCompared = compareSymbols.includes(item.symbol);
+    return (
+      <div
+        key={item.symbol}
+        role="button"
+        tabIndex={0}
+        data-testid={`${inWatchlist ? "watchlist-symbol" : "symbol-search-result"}-${item.symbol}`}
+        onClick={() => applySymbolSelection(item.symbol)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            applySymbolSelection(item.symbol);
+          }
+        }}
+        className={menuItem(symbol === item.symbol)}
+      >
+        <div className="flex items-center justify-between gap-1">
+          <div className="min-w-0 flex items-baseline gap-1 cursor-pointer">
+            <div className="shrink-0 text-[12px] font-semibold uppercase">{item.symbol}</div>
+            <div className={`truncate text-[10px] ${text.muted}`}>{item.name}</div>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            {canUseCompareSeries && item.symbol !== symbol && (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  toggleCompareSymbol(item.symbol);
+                }}
+                className={toggleButton(isCompared, "sm", "px-2")}
+                title={isCompared ? `Remove ${item.symbol} comparison` : `Add ${item.symbol} as compare line`}
+              >
+                {isCompared ? "Compared" : "+ Compare"}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                if (isWatched) {
+                  removeWatchlistSymbol(item.symbol);
+                } else {
+                  addWatchlistSymbol(item.symbol);
+                }
+              }}
+              aria-label={inWatchlist ? "Remove" : isWatched ? "Remove from watchlist" : "Add to watchlist"}
+              className={iconButton("ghost", "sm")}
+              title={isWatched ? `Remove ${item.symbol} from watchlist` : `Add ${item.symbol} to watchlist`}
+            >
+              {inWatchlist
+                ? <span className="text-[16px] leading-none">×</span>
+                : <span className="text-[12px] leading-none font-semibold">{isWatched ? "★" : "+"}</span>}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div ref={rootRef} style={themeVars} className={`h-screen w-screen ${surface.shell} ${text.main} overflow-hidden flex flex-col`}>
       <div className={`relative z-[5000] flex ${isCompactViewport ? "flex-wrap items-start justify-start gap-1" : "items-center justify-between gap-1 whitespace-nowrap"} overflow-visible border-b px-2 py-1.5 ${surface.chrome}`}>
@@ -810,66 +792,7 @@ export default function PlaygroundPage() {
 
                     <div className={`space-y-1 overflow-y-auto ${isCompactViewport ? "max-h-48" : "max-h-72 pr-0.5"}`}>
                       {filteredSymbolResults.length > 0 ? (
-                        filteredSymbolResults.map((item) => {
-                          const isWatched = watchlistSymbols.includes(item.symbol);
-                          const isActive = symbol === item.symbol;
-                          const isCompared = compareSymbols.includes(item.symbol);
-
-                          return (
-                            <div
-                              key={item.symbol}
-                              role="button"
-                              tabIndex={0}
-                              data-testid={`symbol-search-result-${item.symbol}`}
-                              onClick={() => applySymbolSelection(item.symbol)}
-                              onKeyDown={(event) => {
-                                if (event.key === "Enter" || event.key === " ") {
-                                  event.preventDefault();
-                                  applySymbolSelection(item.symbol);
-                                }
-                              }}
-                              className={menuItem(isActive)}
-                            >
-                              <div className="flex items-center justify-between gap-1">
-                                <div className="min-w-0 flex items-baseline gap-1 cursor-pointer">
-                                  <div className="shrink-0 text-[12px] font-semibold uppercase">{item.symbol}</div>
-                                  <div className={`truncate text-[10px] ${text.muted}`}>{item.name}</div>
-                                </div>
-                                <div className="flex items-center gap-1 shrink-0">
-                                  {canUseCompareSeries && item.symbol !== symbol && (
-                                    <button
-                                      type="button"
-                                      onClick={(event) => {
-                                        event.stopPropagation();
-                                        toggleCompareSymbol(item.symbol);
-                                      }}
-                                      className={toggleButton(isCompared, "sm", "px-2")}
-                                      title={isCompared ? `Remove ${item.symbol} comparison` : `Add ${item.symbol} as compare line`}
-                                    >
-                                      {isCompared ? "Compared" : "+ Compare"}
-                                    </button>
-                                  )}
-                                  <button
-                                    type="button"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      if (isWatched) {
-                                        removeWatchlistSymbol(item.symbol);
-                                      } else {
-                                        addWatchlistSymbol(item.symbol);
-                                      }
-                                    }}
-                                    aria-label={isWatched ? "Remove from watchlist" : "Add to watchlist"}
-                                    className={`${iconButton("ghost", "sm")}`}
-                                    title={isWatched ? `Remove ${item.symbol} from watchlist` : `Add ${item.symbol} to watchlist`}
-                                  >
-                                    <span className="text-[12px] leading-none font-semibold">{isWatched ? "★" : "+"}</span>
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })
+                        filteredSymbolResults.map((item) => renderSymbolRow(item, false))
                       ) : (
                         <div className={emptyState}>
                           No symbols match {symbolSearch || "this query"}.
@@ -888,61 +811,7 @@ export default function PlaygroundPage() {
 
                     <div className={`space-y-1 overflow-y-auto ${isCompactViewport ? "max-h-40" : "max-h-72 pl-0.5"}`}>
                       {watchlistEntries.length > 0 ? (
-                        watchlistEntries.map((item) => {
-                          const isActive = symbol === item.symbol;
-                          const isCompared = compareSymbols.includes(item.symbol);
-
-                          return (
-                            <div
-                              key={item.symbol}
-                              role="button"
-                              tabIndex={0}
-                              data-testid={`watchlist-symbol-${item.symbol}`}
-                              onClick={() => applySymbolSelection(item.symbol)}
-                              onKeyDown={(event) => {
-                                if (event.key === "Enter" || event.key === " ") {
-                                  event.preventDefault();
-                                  applySymbolSelection(item.symbol);
-                                }
-                              }}
-                              className={menuItem(isActive)}
-                            >
-                              <div className="flex items-center justify-between gap-1">
-                                <div className="min-w-0 flex items-baseline gap-1 cursor-pointer">
-                                  <div className="shrink-0 text-[12px] font-semibold uppercase">{item.symbol}</div>
-                                  <div className={`truncate text-[10px] ${text.muted}`}>{item.name}</div>
-                                </div>
-                                <div className="flex items-center gap-1 shrink-0">
-                                  {canUseCompareSeries && item.symbol !== symbol && (
-                                    <button
-                                      type="button"
-                                      onClick={(event) => {
-                                        event.stopPropagation();
-                                        toggleCompareSymbol(item.symbol);
-                                      }}
-                                      className={toggleButton(isCompared, "sm", "px-2")}
-                                      title={isCompared ? `Remove ${item.symbol} comparison` : `Add ${item.symbol} as compare line`}
-                                    >
-                                      {isCompared ? "Compared" : "+ Compare"}
-                                    </button>
-                                  )}
-                                  <button
-                                    type="button"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      removeWatchlistSymbol(item.symbol);
-                                    }}
-                                    aria-label="Remove"
-                                    className={iconButton("ghost", "sm")}
-                                    title={`Remove ${item.symbol} from watchlist`}
-                                  >
-                                    <span className="text-[16px] leading-none">×</span>
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })
+                        watchlistEntries.map((item) => renderSymbolRow(item, true))
                       ) : (
                         <div className={emptyState}>
                           Add symbols from the search column to build your watchlist.
@@ -1001,7 +870,7 @@ export default function PlaygroundPage() {
               setShowStyleMenu(false);
               setShowSymbolMenu(false);
             }}
-            className={`flex items-center gap-1.5 h-8 px-2.5 rounded-md border text-xs font-semibold transition-all duration-150 ${
+            className={`flex items-center gap-1.5 h-8 px-2.5 rounded-md border text-xs font-semibold transition-all duration-150 ${isCompactViewport ? "order-1" : ""} ${
               showIndicatorModal
                 ? "border-blue-500 bg-blue-600 text-white"
                 : "border-[color:var(--border)] bg-[var(--control-bg)] text-[color:var(--text-main)] hover:bg-[var(--control-hover-bg)]"
@@ -1120,7 +989,7 @@ export default function PlaygroundPage() {
             <Maximize2 size={18} />
           </button>
 
-          <div className={controlGroup("lg", "gap-0.5 px-1")} title="Replay date range">
+          <div className={controlGroup("lg", `gap-0.5 px-1 ${isCompactViewport ? "order-2" : ""}`)} title="Replay date range">
             <input aria-label="Replay start date" type="date" value={replayStartDate} max={replayEndDate} onChange={(event) => { setReplayStartDate(event.target.value); setReplayPlaying(false); setReplayInitialized(false); }} className="ui-date h-7 w-[101px] bg-transparent px-1 text-[10px] text-[color:var(--text-main)] outline-none" />
             <span aria-hidden="true" className={`px-0.5 text-[10px] ${text.muted}`}>–</span>
             <input aria-label="Replay end date" type="date" value={replayEndDate} min={replayStartDate} onChange={(event) => { setReplayEndDate(event.target.value); setReplayPlaying(false); setReplayInitialized(false); }} className="ui-date h-7 w-[101px] bg-transparent px-1 text-[10px] text-[color:var(--text-main)] outline-none" />
