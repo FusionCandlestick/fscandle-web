@@ -441,29 +441,18 @@ function applyMainSeriesStyle(
 }
 
 function applyIndicators(chart: FusionCandlestickChart, indicators: IndicatorConfig[]) {
+  const dedicated: Partial<Record<IndicatorKind, (params?: number[]) => void>> = {
+    ema: params => chart.addEMASeries(params?.[0] ?? 20),
+    boll: params => chart.addBOLLSeries(params?.[0] ?? 20, params?.[1] ?? 2),
+    rsi: params => chart.addRSISeries(params?.[0] ?? 14),
+    macd: params => chart.addMACDSeries({ calcParams: params }),
+    kdj: () => chart.addKDJSeries(),
+    wr: () => chart.addWRSeries(),
+  };
   indicators.forEach((indicator) => {
-    if (indicator.kind === "ema") {
-      chart.addEMASeries(indicator.params?.[0] ?? 20);
-      return;
-    }
-    if (indicator.kind === "boll") {
-      chart.addBOLLSeries(indicator.params?.[0] ?? 20, indicator.params?.[1] ?? 2);
-      return;
-    }
-    if (indicator.kind === "rsi") {
-      chart.addRSISeries(indicator.params?.[0] ?? 14);
-      return;
-    }
-    if (indicator.kind === "macd") {
-      chart.addMACDSeries({ calcParams: indicator.params });
-      return;
-    }
-    if (indicator.kind === "kdj") {
-      chart.addKDJSeries();
-      return;
-    }
-    if (indicator.kind === "wr") {
-      chart.addWRSeries();
+    const add = dedicated[indicator.kind];
+    if (add) {
+      add(indicator.params);
       return;
     }
 

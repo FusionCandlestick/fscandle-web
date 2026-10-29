@@ -9,26 +9,25 @@ Static site, no server runtime. Two routes are the whole surface:
 
 ## Develop
 
+Use Node 22 and install the committed dependency lock:
+
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
-The `fscandle` engine is a normal npm dependency (`fscandle@^0.1.0`). To develop
-against a local checkout, build and install a local package (this also avoids
-Turbopack's project-root restrictions on sibling-directory symlinks):
+The engine is pinned to `vendor/fscandle-0.1.0.tgz`. This local candidate
+contains the indicator plugin APIs required by the site; the registry package
+with the same version does not. The lockfile verifies tarball integrity, and
+`vendor/fscandle-provenance.json` records its source and artifact digests.
+No sibling checkout or unpublished registry version is needed to install.
 
-```bash
-cd ../fscandle
-npm run build:library
-npm pack --ignore-scripts --pack-destination /tmp
-cd ../fscandle-web
-npm install --no-save --package-lock=false /tmp/fscandle-0.1.0.tgz
-```
-
-Repeat after engine changes and restart the dev server. `npm ci` restores the
-published dependency. The indicator plugin API and `indicatorRemoved` event in
-this workspace require the corresponding local engine build until it is released.
+For an engine update, build and test the engine in its own checkout, generate
+its tarball with `npm pack --ignore-scripts`, and replace the vendored artifact.
+Regenerate `package-lock.json` with `npm install --package-lock-only`, update the
+provenance, then verify a clean `npm ci`, unit tests and static build. Keep the
+previous release artifact for rollback; version text alone does not identify
+these local candidates.
 
 The indicator library uses compiled templates in
 `src/app/playground/indicatorPlugins.ts`, installed through `useIndicatorPlugin`.
