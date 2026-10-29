@@ -18,17 +18,13 @@ npm run dev
 
 The engine is pinned to `vendor/fscandle-0.1.0.tgz`. This local candidate
 contains the indicator plugin APIs required by the site; the registry package
-with the same version does not. The lockfile verifies tarball integrity, and
-`vendor/fscandle-provenance.json` records its source and artifact digests.
-No sibling checkout or unpublished registry version is needed to install.
-The workspace registers this artifact explicitly; its architecture check validates
-the archive's package identity, provenance digest and lockfile integrity. Local
-source-directory dependencies and links remain forbidden.
+with the same version does not. The lockfile verifies tarball integrity; no sibling
+checkout is needed to install. Local source-directory dependencies and links
+remain forbidden.
 
 For an engine update, build and test the engine in its own checkout, generate
 its tarball with `npm pack --ignore-scripts`, and replace the vendored artifact.
-Regenerate `package-lock.json` with `npm install --package-lock-only`, update the
-provenance, then verify a clean `npm ci`, unit tests and static build. Keep the
+Regenerate `package-lock.json` with `npm install --package-lock-only`, then verify a clean `npm ci`, unit tests and static build. Keep the
 previous release artifact for rollback; version text alone does not identify
 these local candidates.
 
