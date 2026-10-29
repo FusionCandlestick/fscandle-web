@@ -21,6 +21,9 @@ contains the indicator plugin APIs required by the site; the registry package
 with the same version does not. The lockfile verifies tarball integrity, and
 `vendor/fscandle-provenance.json` records its source and artifact digests.
 No sibling checkout or unpublished registry version is needed to install.
+The workspace registers this artifact explicitly; its architecture check validates
+the archive's package identity, provenance digest and lockfile integrity. Local
+source-directory dependencies and links remain forbidden.
 
 For an engine update, build and test the engine in its own checkout, generate
 its tarball with `npm pack --ignore-scripts`, and replace the vendored artifact.
