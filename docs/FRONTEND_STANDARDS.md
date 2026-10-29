@@ -59,8 +59,9 @@ FusionCandlestick maintains an ultralight, highly optimized dependency graph:
 * **Framework**: Next.js `16.2.x` (App Router) + React `19.2.x` (React 19 Server/Client components)
 * **Language & Type System**: TypeScript `6.0.3` (Strict mode, zero `any` policy)
 * **Styling**: Tailwind CSS `v4` (`@tailwindcss/postcss`)
-* **Renderer**: Native HTML5 2D Canvas + Web Workers for offscreen calculation / indicator streaming
-* **Bundler & Exports**: `tsup` for multi-format artifacts (CJS, ESM, `.d.ts`, `/react`, `/datafeed`)
+* **Chart engine**: consume the pinned `fscandle` package; rendering, indicators
+  and package exports belong to [the engine repository](../../fscandle/README.md).
+* **Site build**: Next.js static export; artifact updates follow [README](../README.md#develop).
 
 ---
 
@@ -206,17 +207,16 @@ ctx.translate(0.5, 0.5);
 
 ```
 src/
-├── chart/              # Core Chart Engine (Rendering loop, scale models, viewport)
-├── engine/             # Math kernel, CoordinateTransformer, OverlayManager
-├── components/         # React wrappers and shared financial UI primitives
-├── datafeed/           # Market data feeds, WebSocket adapters, replay generators
-├── types/              # Canonical TypeScript contracts & options
+├── store/              # Site workspace state
 └── app/                # Next.js App Router (Landing page, Playground sandbox, SEO)
     ├── components/landing/ # Showcase sections, ThemeContext, SiteHeader, Footer
     ├── playground/         # High-density multi-pane financial terminal
     ├── robots.ts           # Search engine crawling rules
     └── sitemap.ts          # Sitemap generator
 ```
+
+Do not add a second chart engine or datafeed layer here. Extend the package in
+its own repository and consume its versioned artifact.
 
 ---
 
