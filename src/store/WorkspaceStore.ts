@@ -30,26 +30,18 @@ export const uniqueSymbolList = (symbols: string[]) => {
 };
 
 const normalizePanelSymbols = (panelSymbols?: string[]) => {
-  const next = [...DEFAULT_PANEL_SYMBOLS];
-
-  uniqueSymbolList(panelSymbols ?? [])
-    .slice(0, PANEL_COUNT)
-    .forEach((symbol, index) => {
-      next[index] = symbol;
-    });
-
-  return next;
+  return DEFAULT_PANEL_SYMBOLS.map((fallback, index) =>
+    normalizeSymbol(panelSymbols?.[index] ?? fallback) || fallback,
+  );
 };
 
 const normalizePanelCompareSymbols = (panelCompareSymbols: string[][] | undefined, panelSymbols: string[]) => {
-  const next = Array.from({ length: PANEL_COUNT }, (_, index) => {
+  return Array.from({ length: PANEL_COUNT }, (_, index) => {
     const source = panelCompareSymbols?.[index] ?? DEFAULT_COMPARE_SYMBOLS[index] ?? [];
     return uniqueSymbolList(source)
       .filter((symbol) => symbol !== panelSymbols[index])
       .slice(0, 5);
   });
-
-  return next;
 };
 
 const DEFAULT_PANEL_INDICATORS: PersistedIndicator[][] = [[], [], [], []];
