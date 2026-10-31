@@ -1,12 +1,4 @@
-/**
- * Single source of truth for the landing FAQ.
- *
- * Consumed both by `FAQSection` (visible accordion) and by the JSON-LD
- * `FAQPage` graph in `app/layout.tsx`. Google requires the structured data to
- * match the visible content, so there is exactly one list and both readers
- * import it. Plain `.ts`, no `"use client"`, so the server layout can import
- * it without pulling a client component into the server graph.
- */
+/** Shared questions for the visible homepage FAQ and its colocated JSON-LD. */
 
 export interface FAQItem {
   question: string;

@@ -98,11 +98,14 @@ try {
   }
   await page.mouse.up();
 
-  // Zoom: wheel in and out over the chart.
+  // Zoom: Ctrl+wheel in and out over the chart.
+  await page.keyboard.down('Control');
   for (let step = 0; step < 30; step += 1) {
     await page.mouse.wheel(0, step % 2 === 0 ? -120 : 120);
     await page.waitForTimeout(8);
   }
+
+  await page.keyboard.up('Control');
 
   // Crosshair: continuous hover, the most frequent repaint path.
   for (let step = 0; step < 40; step += 1) {

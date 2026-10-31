@@ -23,6 +23,19 @@ export function FAQSection({ className }: { className?: string }) {
 
   return (
     <Reveal className={cn("w-full", className)}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "@id": "https://fusioncandlestick.dev/#faq",
+          mainEntity: FAQ_ITEMS.map((item) => ({
+            "@type": "Question",
+            name: item.question,
+            acceptedAnswer: { "@type": "Answer", text: item.answer },
+          })),
+        }) }}
+      />
       <section
         aria-labelledby="faq-heading"
         className={cn(

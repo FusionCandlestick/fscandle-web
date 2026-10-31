@@ -5,7 +5,7 @@ test('showcase code switches preserve controls and selected examples', async ({ 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   for (const [id, label, snippet] of [
-    ['showcase-series', 'Styles', "style: 'area'"],
+    ['showcase-series', 'Styles', "chart.setChartStyle('area')"],
     ['showcase-indicators', 'Overview', "chart.createIndicator('MACD'"],
     ['showcase-compare', 'Overview', "chart.setPriceScaleMode('log')"],
     ['showcase-drawing', 'Tools', "chart.setDrawingMode('fibonacci')"],
