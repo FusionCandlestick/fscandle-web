@@ -50,7 +50,7 @@ Drop `NEXT_PUBLIC_BASE_PATH` once the site moves to a custom domain.
 | `npm run dev` | Next dev server |
 | `npm run build` | static export to `out/` |
 | `npm start` | Preview the built static export on loopback; set the same `NEXT_PUBLIC_BASE_PATH` as at build time |
-| `npm run test:unit` | Static export route and filesystem boundary tests |
+| `npm run test:unit` | Compiled indicator plugins and static export filesystem boundaries |
 | `npm run lint` | ESLint (eslint-config-next) |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run test:e2e` | Playwright — routes, gestures, screenshot regression |
