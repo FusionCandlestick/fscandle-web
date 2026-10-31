@@ -27,6 +27,11 @@ Status: v0.1.0. The public API is 0.x and may change between minor versions.
   compare series, watchlist, layouts, screenshot, fullscreen, symbol switching.
 - Every route is prerendered to static HTML; there is no server runtime.
 
+Bundled chart data is demonstrative. Per-symbol manifests declare daily cache
+inputs and synthetic intraday bars. The app does not expose complete historical
+identity, currency, adjustment or bar-availability evidence; replay is not a
+point-in-time research or execution receipt.
+
 ## Engine capabilities
 
 - Series renderers (8): candlestick, hollow candle, Heikin-Ashi, OHLC bar,

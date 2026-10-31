@@ -63,9 +63,9 @@ interface HistoricalFileRow {
   volume?: number;
 }
 
-// FMP timestamps are New York exchange wall-clock values without an offset.
-// Encoding them as UTC preserves the displayed session time consistently in
-// every browser timezone without changing bar order or OHLC values.
+// Bundled offset-free dates are encoded as UTC for consistent chart labels.
+// This display convention does not establish a provider timezone or the real
+// UTC instant; the manifests also identify synthetic intraday inputs.
 const exchangeWallClockTimestamp = (value: string): number => {
   return Date.parse(`${value.replace(" ", "T")}Z`);
 };

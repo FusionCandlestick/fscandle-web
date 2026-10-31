@@ -58,8 +58,14 @@ Drop `NEXT_PUBLIC_BASE_PATH` once the site moves to a custom domain.
 
 ## Data
 
-`public/data/fmp/` holds cached daily/intraday OHLC JSON for the playground's
-built-in symbols. `/playground` fetches these directly; there is no data API.
+`public/data/fmp/` holds bundled demonstration OHLC JSON. Its per-symbol manifests
+declare Yahoo daily cache inputs and intraday bars synthesised from daily OHLC;
+the directory name does not establish an FMP source. `/playground` fetches bars
+directly and does not load those manifests. There is no data API.
+
+These files do not establish currency, adjustment, historical identity or when
+a completed weekly bar became available. Replay is a chart demonstration, not
+a point-in-time research/account receipt; synthetic intraday bars are not real trades.
 
 ## License
 
