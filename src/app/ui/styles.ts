@@ -1,29 +1,5 @@
-/**
- * The class vocabulary both surfaces build from.
- *
- * The landing page and the playground each declared their own `panelClass`,
- * `subtleClass`, `inverseClass`, `badgeClass`, `chromeClass`, `textMainClass`
- * and `textMutedClass` — same names, same intent, two definitions, and the
- * landing page then prop-drilled six of them into `FeatureShowcase` as strings.
- * Anything added to one surface had to be remembered on the other.
- *
- * Three scales, and nothing outside them:
- *
- * - **Height.** `sm` 28px, `md` 32px, `lg` 36px. Controls were h-6/h-7/h-8/h-9
- *   with no rule about which went where; the 24px one was too small to hit on
- *   touch and is gone.
- * - **Radius.** 6px on controls, 10px on panels and popovers, full on badges.
- *   The two surfaces mixed `rounded` (4px) and `rounded-md` (6px) *within the
- *   same popover*, which is the kind of difference nobody can name but everyone
- *   sees.
- * - **Type.** 11px labels, 12px body, 13px controls, and uppercase tracking for
- *   section labels only. The 10px text that most of the playground's menus used
- *   is below what a dense UI can afford to be legible at.
- *
- * Every interactive element carries the same focus ring. It used to be on one
- * class (`controlClass`), so a keyboard user lost the ring the moment they
- * tabbed onto anything styled `subtleClass` — which is most of the playground.
- */
+/** Playground class helpers for dense controls and workspace panels.
+ * Landing helpers use separate tokens and larger touch targets. */
 
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";

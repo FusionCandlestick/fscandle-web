@@ -1,27 +1,5 @@
-/**
- * One theme, for both surfaces.
- *
- * `THEMES` used to exist twice: a 34-key copy in the landing page and a 53-key
- * copy in the playground. 52 tokens were shared by name — and three of them had
- * *different values*, which is what two copies of a design system always
- * converge on:
- *
- *     dark.border        landing rgba(100,116,139,0.5)   playground #070b14
- *     dark.borderStrong  landing rgba(100,116,139,0.7)   playground #0b1324
- *     dark.axisBorder    landing rgba(100,116,139,0.7)   playground transparent
- *
- * The playground's values are the shell background, so "border" there meant a
- * seam you cannot see, while the same name on the landing page meant a visible
- * hairline. Both readings are legitimate; having one name mean both is not.
- * They are separate tokens now — `border` is a line, `seam` is a fold — and
- * there is a single definition of each.
- *
- * Tokens are consumed as CSS custom properties (`themeCssVars`) rather than
- * read in JSX, so a component's classes never have to know which mode is
- * active. The chart-series tokens at the bottom are passed to the engine's
- * options, which is what keeps a chart's candles, axes and watermark in step
- * with the chrome around it.
- */
+/** Playground palette and chart colors.
+ * CSS variables are applied at the workspace root; landing tokens are separate. */
 
 import type { CSSProperties } from "react";
 import type {

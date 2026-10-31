@@ -1,15 +1,5 @@
-/**
- * Landing-page-only design tokens.
- *
- * `/playground` has its own token system (`../ui/theme.ts`), shared with
- * nothing else on purpose — that file's header explains the bug two divergent
- * copies caused before. This is a *third*, independent copy by design: the
- * landing page wants a hairline-bordered, high-contrast marketing surface
- * (near-black/white shells, flat panels, a single accent) that
- * `/playground`'s dense, information-first chrome has no use for. Keeping
- * them apart means either surface can move without coordinating with the
- * other.
- */
+/** Landing palette and chart colors; CSS variables use the --lp- prefix.
+ * The playground owns a separate palette in ../ui/theme.ts. */
 
 import type { CSSProperties } from "react";
 import type {
@@ -44,7 +34,6 @@ export interface LandingThemeTokens {
 
   contrastBg: string;
   contrastText: string;
-  contrastBorder: string;
   focusRing: string;
 
   /** Sticky top-bar fill — intentionally a shade off the page so the chrome
@@ -55,15 +44,6 @@ export interface LandingThemeTokens {
 
   /** Marketing accent identity — deliberately distinct from chart series colors. */
   accent: string;
-  accentSoft: string;
-  heroGradientFrom: string;
-  heroGradientVia: string;
-  heroGradientTo: string;
-
-  shadowSm: string;
-  shadowMd: string;
-  shadowLg: string;
-  shadowGlow: string;
 
   axisText: string;
   axisGrid: string;
@@ -73,10 +53,6 @@ export interface LandingThemeTokens {
   axisBorder: string;
   crosshair: string;
   watermark: string;
-
-  chipBg: string;
-  chipText: string;
-  chipBorder: string;
 
   candle: Partial<CandlestickStyleOptions>;
   bar: Partial<BarSeriesOptions>;
@@ -123,7 +99,6 @@ export const LANDING_THEMES: Record<ThemeMode, LandingThemeTokens> = {
 
     contrastBg: "#ededed",
     contrastText: "#000000",
-    contrastBorder: "#ededed",
     focusRing: "rgba(41, 98, 255, 0.6)",
 
     headerBg: "color-mix(in oklab, #0a0a0a 82%, transparent)",
@@ -131,15 +106,6 @@ export const LANDING_THEMES: Record<ThemeMode, LandingThemeTokens> = {
       "linear-gradient(to bottom, rgba(3, 68, 48, 0.82) 0%, rgba(4, 78, 55, 0.56) 20%, rgba(5, 70, 50, 0.28) 42%, rgba(4, 55, 40, 0.1) 62%, transparent 82%)",
 
     accent: "#2962ff",
-    accentSoft: "rgba(41, 98, 255, 0.14)",
-    heroGradientFrom: "#000000",
-    heroGradientVia: "#050505",
-    heroGradientTo: "#000000",
-
-    shadowSm: "0 1px 2px rgba(0,0,0,0.5)",
-    shadowMd: "0 4px 16px -6px rgba(0,0,0,0.6)",
-    shadowLg: "0 12px 32px -12px rgba(0,0,0,0.7)",
-    shadowGlow: "0 0 0 1px rgba(41,98,255,0.4)",
 
     axisText: "#ededed",
     axisGrid: "rgba(255, 255, 255, 0.06)",
@@ -149,10 +115,6 @@ export const LANDING_THEMES: Record<ThemeMode, LandingThemeTokens> = {
     axisBorder: "rgba(255, 255, 255, 0.1)",
     crosshair: "rgba(41, 98, 255, 0.85)",
     watermark: "rgba(255, 255, 255, 0.08)",
-
-    chipBg: "rgba(255, 255, 255, 0.06)",
-    chipText: "#ededed",
-    chipBorder: "rgba(255, 255, 255, 0.14)",
 
     candle: {
       upColor: "#089981",
@@ -205,7 +167,6 @@ export const LANDING_THEMES: Record<ThemeMode, LandingThemeTokens> = {
 
     contrastBg: "#000000",
     contrastText: "#ffffff",
-    contrastBorder: "#000000",
     focusRing: "rgba(41, 98, 255, 0.5)",
 
     headerBg: "#e8eaee",
@@ -213,15 +174,6 @@ export const LANDING_THEMES: Record<ThemeMode, LandingThemeTokens> = {
       "linear-gradient(to bottom, rgba(100, 116, 139, 0.22) 0%, rgba(100, 116, 139, 0.13) 22%, rgba(100, 116, 139, 0.06) 45%, rgba(100, 116, 139, 0.02) 65%, transparent 82%)",
 
     accent: "#2962ff",
-    accentSoft: "rgba(41, 98, 255, 0.08)",
-    heroGradientFrom: "#ffffff",
-    heroGradientVia: "#fafafa",
-    heroGradientTo: "#ffffff",
-
-    shadowSm: "0 1px 2px rgba(0,0,0,0.05)",
-    shadowMd: "0 4px 16px -6px rgba(0,0,0,0.08)",
-    shadowLg: "0 12px 32px -12px rgba(0,0,0,0.12)",
-    shadowGlow: "0 0 0 1px rgba(41,98,255,0.3)",
 
     axisText: "#000000",
     axisGrid: "rgba(0, 0, 0, 0.08)",
@@ -231,10 +183,6 @@ export const LANDING_THEMES: Record<ThemeMode, LandingThemeTokens> = {
     axisBorder: "rgba(0, 0, 0, 0.1)",
     crosshair: "rgba(41, 98, 255, 0.6)",
     watermark: "rgba(0, 0, 0, 0.06)",
-
-    chipBg: "rgba(0, 0, 0, 0.05)",
-    chipText: "#000000",
-    chipBorder: "rgba(0, 0, 0, 0.12)",
 
     candle: {
       upColor: "#089981",
@@ -286,19 +234,7 @@ export function landingThemeCssVars(theme: LandingThemeTokens): CSSProperties {
     "--lp-glass-border": theme.glassBorder,
     "--lp-contrast-bg": theme.contrastBg,
     "--lp-contrast-text": theme.contrastText,
-    "--lp-contrast-border": theme.contrastBorder,
     "--lp-focus-ring": theme.focusRing,
     "--lp-accent": theme.accent,
-    "--lp-accent-soft": theme.accentSoft,
-    "--lp-hero-from": theme.heroGradientFrom,
-    "--lp-hero-via": theme.heroGradientVia,
-    "--lp-hero-to": theme.heroGradientTo,
-    "--lp-shadow-sm": theme.shadowSm,
-    "--lp-shadow-md": theme.shadowMd,
-    "--lp-shadow-lg": theme.shadowLg,
-    "--lp-shadow-glow": theme.shadowGlow,
-    "--lp-chip-bg": theme.chipBg,
-    "--lp-chip-text": theme.chipText,
-    "--lp-chip-border": theme.chipBorder,
   } as CSSProperties;
 }
