@@ -2,10 +2,8 @@
 
 import { useEffect, useLayoutEffect, useRef } from "react";
 
-import { FusionCandlestickChart, type DrawingLayer } from "fscandle";
+import { FusionCandlestickChart, type DrawingLayer, type PriceScaleMode, type KLineData } from "fscandle";
 import { formulaIndicatorPlugin } from "./indicatorPlugins";
-import type { PriceScaleMode } from "fscandle";
-import type { KLineData } from "fscandle";
 import { THEMES, type ThemeMode } from "../ui/theme";
 import { asset } from "../lib/asset";
 import type { PersistedIndicator } from "@/store/WorkspaceStore";
@@ -85,7 +83,7 @@ const loadHistoricalData = async (symbol: string, period: Period): Promise<KLine
     high: row.high,
     low: row.low,
     close: row.close,
-    volume: row.volume ?? 0,
+    volume: row.volume,
   }));
 };
 
