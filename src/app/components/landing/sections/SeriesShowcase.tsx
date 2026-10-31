@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Layers } from "lucide-react";
 import { DemoChartFrame } from "../DemoChartFrame";
 import { ShowcaseFrame, ShowcaseMobileCode, ShowcaseViewToggle } from "../ShowcaseFrame";
@@ -26,40 +26,24 @@ export function SeriesShowcase({ theme, className }: { theme: LandingThemeTokens
   const [viewMode, setViewMode] = useState<"controls" | "code">("controls");
   const reducedMotion = useReducedMotion();
 
-  const [phases, setPhases] = useState<SegmentedPhase[]>([
-    { fromIndex: 0, toIndex: 34, style: "candle", label: "Candle" },
-    { fromIndex: 35, toIndex: 69, style: "ha", label: "Heikin-Ashi" },
-    { fromIndex: 70, toIndex: 104, style: "baseline", label: "Baseline" },
-    { fromIndex: 105, toIndex: 134, style: "bar", label: "OHLC Bar" },
-    { fromIndex: 135, toIndex: 9999, style: "area", label: "Live: Area" },
-  ]);
-
-  // Auto-cycle through the styles on the live phase every 3.2s
+  // Auto-cycle through the styles on the live phase every 3.2s.
   useEffect(() => {
     if (!autoRotate || reducedMotion) return;
     const timer = setInterval(() => {
-      setCycleIndex((prev) => {
-        const nextIdx = (prev + 1) % ALL_STYLES.length;
-        const newStyle = ALL_STYLES[nextIdx].id;
-        const info = ALL_STYLES[nextIdx];
-        setPhases((oldPhases) => {
-          const updated = [...oldPhases];
-          const lastIdx = updated.length - 1;
-          updated[lastIdx] = {
-            ...updated[lastIdx],
-            style: newStyle,
-            label: `Live: ${info.label}`,
-          };
-          return updated;
-        });
-        return nextIdx;
-      });
+      setCycleIndex((prev) => (prev + 1) % ALL_STYLES.length);
     }, 3200);
     return () => clearInterval(timer);
   }, [autoRotate, reducedMotion]);
 
-  const selectedStyle = ALL_STYLES[cycleIndex % ALL_STYLES.length].id;
   const activeInfo = ALL_STYLES[cycleIndex % ALL_STYLES.length];
+  const selectedStyle = activeInfo.id;
+  const phases = useMemo<SegmentedPhase[]>(() => [
+    { fromIndex: 0, toIndex: 34, style: "candle", label: "Candle" },
+    { fromIndex: 35, toIndex: 69, style: "ha", label: "Heikin-Ashi" },
+    { fromIndex: 70, toIndex: 104, style: "baseline", label: "Baseline" },
+    { fromIndex: 105, toIndex: 134, style: "bar", label: "OHLC Bar" },
+    { fromIndex: 135, toIndex: 9999, style: activeInfo.id, label: `Live: ${activeInfo.label}` },
+  ], [activeInfo]);
 
   const config: ChartDemoConfig = {
     symbol: "BTCUSDT",
@@ -78,33 +62,16 @@ export function SeriesShowcase({ theme, className }: { theme: LandingThemeTokens
     if (idx !== -1) {
       setCycleIndex(idx);
       setAutoRotate(false); // Pause auto-rotation on explicit manual click
-      const info = ALL_STYLES[idx];
-      setPhases((oldPhases) => {
-        const updated = [...oldPhases];
-        const lastIdx = updated.length - 1;
-        updated[lastIdx] = {
-          ...updated[lastIdx],
-          style: id,
-          label: `Live: ${info.label}`,
-        };
-        return updated;
-      });
     }
   };
 
   const codeSnippet = `import { createChart } from 'fscandle';
 
-// Multi-stage segmented series on a single continuous line
-const chart = createChart(container, {
-  segmentedPhases: [
-    { fromIndex: 0,   toIndex: 34,  style: 'candle' },
-    { fromIndex: 35,  toIndex: 69,  style: 'ha' },
-    { fromIndex: 70,  toIndex: 104, style: 'baseline' },
-    { fromIndex: 105, toIndex: 134, style: 'bar' },
-    { fromIndex: 135, toIndex: 160, style: '${selectedStyle}' },
-  ],
-});
-chart.setData(btcData);`;
+const chart = createChart(container);
+chart.setData(btcData);
+
+// Switch the active style; the segmented demo uses a custom renderer.
+chart.setChartStyle('${selectedStyle}');`;
 
   return (
     <ShowcaseFrame
