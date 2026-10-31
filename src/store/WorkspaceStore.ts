@@ -26,20 +26,7 @@ const MAX_RECENT_SYMBOLS = 8;
 const normalizeSymbol = (value: string) => value.trim().toUpperCase();
 
 export const uniqueSymbolList = (symbols: string[]) => {
-  const seen = new Set<string>();
-  const next: string[] = [];
-
-  symbols.forEach((symbol) => {
-    const normalized = normalizeSymbol(symbol);
-    if (!normalized || seen.has(normalized)) {
-      return;
-    }
-
-    seen.add(normalized);
-    next.push(normalized);
-  });
-
-  return next;
+  return [...new Set(symbols.map(normalizeSymbol).filter(Boolean))];
 };
 
 const normalizePanelSymbols = (panelSymbols?: string[]) => {
