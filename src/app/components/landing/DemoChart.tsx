@@ -3,7 +3,7 @@
 /**
  * The chart-mounting half of a demo card. This file is the dynamic-import
  * boundary: it's the only place in `landing/` that imports the chart engine
- * itself (`FusionCandlestickChart`, `ChartSyncGroup`), so `next/dynamic`
+ * itself (`FusionCandlestickChart`), so `next/dynamic`
  * loading *this* module — rather than gating a `useEffect` inside an
  * eagerly-imported component — is what actually keeps the engine's code out
  * of the page's initial JS. `DemoChartFrame` only imports this module's
@@ -13,8 +13,7 @@
 import { useEffect, useRef } from "react";
 
 import { FusionCandlestickChart } from "fscandle";
-import { ChartSyncGroup } from "fscandle";
-import type { KLineData } from "fscandle";
+import type { ChartSyncGroup, KLineData } from "fscandle";
 
 import {
   buildCompareData,
@@ -22,7 +21,7 @@ import {
   type OverlayInput,
   type Period,
 } from "./chart-demo-data";
-import { cn } from "./styles";
+import { cn, DEMO_FRAME_CLASSES } from "./styles";
 import type { LandingThemeTokens } from "./tokens";
 
 export type ChartStyle = "candle" | "hollow" | "line" | "step" | "baseline" | "area" | "ha" | "bar";
@@ -140,13 +139,6 @@ function tickBar(final: KLineData, tick: number, totalTicks: number): KLineData 
 }
 
 const AXIS_METRICS = { top: 22, bottom: 22, right: 85, left: 55 } as const;
-
-export const DEMO_FRAME_CLASSES: Record<DemoFrame, string> = {
-  compact: "h-[208px] md:h-[220px]",
-  // `h-full` follows the container the section gives it; the floor only keeps a
-  // chart from collapsing before it has measured.
-  feature: "h-full min-h-[220px] md:min-h-[240px]",
-};
 
 const DEMO_CHROME: Record<DemoChrome, { cropTop: number; cropBottom: number; cropLeft: number; cropRight: number }> = {
   full: { cropTop: AXIS_METRICS.top, cropBottom: AXIS_METRICS.bottom, cropLeft: 0, cropRight: 0 },
