@@ -31,8 +31,7 @@ import {
 } from "lucide-react";
 
 import { IndicatorLibraryModal } from "./IndicatorLibraryModal";
-import type { PriceScaleMode } from "fscandle";
-import type { DrawingLayer } from "fscandle";
+import type { PriceScaleMode, DrawingLayer } from "fscandle";
 import {
   createDefaultWorkspaceState,
   loadWorkspaceState,
@@ -289,7 +288,6 @@ export default function PlaygroundPage() {
 
   const rootRef = useRef<HTMLDivElement | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
-  const symbolMenuRef = useRef<HTMLDivElement | null>(null);
 
   const mainAdapter = useRef<ChartAdapter | null>(null);
   const panel1 = useRef<ChartAdapter | null>(null);
@@ -362,10 +360,6 @@ export default function PlaygroundPage() {
   };
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
     const mediaQuery = window.matchMedia("(max-width: 767px)");
     const syncViewportMode = () => {
       setIsCompactViewport(mediaQuery.matches);
@@ -441,7 +435,9 @@ export default function PlaygroundPage() {
   }, [openSidebarTool, showSettings, showSymbolMenu, showStyleMenu]);
 
   useEffect(() => {
-    const activeAdapter = activePanelIndex === 0 ? (mainAdapter.current ?? panel1.current) : [panel1.current, panel2.current, panel3.current, panel4.current][activePanelIndex];
+    const activeAdapter = activePanelIndex === 0
+      ? (layout === "single" ? mainAdapter.current : panel1.current)
+      : [panel1.current, panel2.current, panel3.current, panel4.current][activePanelIndex];
     if (!activeAdapter) {
       return;
     }
@@ -604,7 +600,7 @@ export default function PlaygroundPage() {
 
     updateWorkspaceState((current) => {
       const nextPanelCompareSymbols = current.panelCompareSymbols.map((symbols, index) => {
-        if (index !== current.activePanelIndex) {
+        if (index !== activePanelIndex) {
           return symbols;
         }
 
@@ -638,9 +634,6 @@ export default function PlaygroundPage() {
   };
   const applySymbolSelection = (nextSymbol: string) => {
     activateWorkspaceSymbol(nextSymbol, { closeMenu: true });
-  };
-  const toggleCompareSymbol = (nextSymbol: string) => {
-    toggleActivePanelCompareSymbol(nextSymbol);
   };
   const updateDrawingDefaults = (defaults: Partial<DrawingDefaults>) => {
     setDrawingDefaults((current) => {
@@ -712,7 +705,7 @@ export default function PlaygroundPage() {
                 type="button"
                 onClick={(event) => {
                   event.stopPropagation();
-                  toggleCompareSymbol(item.symbol);
+                  toggleActivePanelCompareSymbol(item.symbol);
                 }}
                 className={toggleButton(isCompared, "sm", "px-2")}
                 title={isCompared ? `Remove ${item.symbol} comparison` : `Add ${item.symbol} as compare line`}
@@ -750,7 +743,7 @@ export default function PlaygroundPage() {
         <input ref={importInputRef} type="file" accept=".json,application/json" className="hidden" onChange={onImportDrawings} />
 
         <div className={isCompactViewport ? "flex w-full min-w-0 flex-wrap items-center gap-1 pb-1" : "flex items-center gap-1 shrink-0"}>
-          <div ref={symbolMenuRef} data-transient-surface="symbol" className="relative">
+          <div data-transient-surface="symbol" className="relative">
             <div className="relative">
               <input
                 value={symbolSearch}
@@ -896,7 +889,7 @@ export default function PlaygroundPage() {
                     <span className="tracking-wide">{item}</span>
                     <button
                       type="button"
-                      onClick={() => toggleCompareSymbol(item)}
+                      onClick={() => toggleActivePanelCompareSymbol(item)}
                       className="ml-0.5 text-xs text-[color:var(--text-muted)] hover:text-red-400 font-semibold"
                       title={`Remove comparison for ${item}`}
                     >
@@ -1001,8 +994,8 @@ export default function PlaygroundPage() {
               onClick={() => {
                 if (replayPlaying) { setReplayPlaying(false); return; }
                 if (!replayInitialized) {
-                  const start = new Date(`${replayStartDate}T00:00:00`).getTime();
-                  const end = new Date(`${replayEndDate}T23:59:59.999`).getTime();
+                  const start = new Date(`${replayStartDate}T00:00:00Z`).getTime();
+                  const end = new Date(`${replayEndDate}T23:59:59.999Z`).getTime();
                   applyToVisible((adapter) => adapter.setReplayRange(start, end));
                   setReplayInitialized(true);
                 }
@@ -1370,13 +1363,9 @@ export default function PlaygroundPage() {
                 }))}
                 onDrawingEnd={() => setActiveTool(undefined)}
                 onReady={(adapter) => {
-                  if (layout === "single" && index === 0) {
-                    mainAdapter.current = adapter;
-                    setDrawingLayers(adapter.getDrawingLayers());
-                    setActiveDrawingLayerId(adapter.getActiveDrawingLayerId());
-                  }
+                  if (layout === "single" && index === 0) mainAdapter.current = adapter;
                   assignPanelAdapter(index, adapter);
-                  if (index === 0 && layout !== "single") {
+                  if (index === 0) {
                     setDrawingLayers(adapter.getDrawingLayers());
                     setActiveDrawingLayerId(adapter.getActiveDrawingLayerId());
                   }
