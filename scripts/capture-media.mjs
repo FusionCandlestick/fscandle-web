@@ -4,15 +4,18 @@
 //   npm run build && node scripts/capture-media.mjs
 //
 // Stills land in docs/assets/. The recording is written as .webm and converted
-// to .gif when an ffmpeg binary is available (Playwright ships one); without it
+// to .gif when a system ffmpeg with GIF support is available; without it
 // the .webm is kept and the conversion is skipped with a warning.
 import { spawn, spawnSync } from 'node:child_process';
+import { once } from 'node:events';
+import { createExportServer } from './serve-export.mjs';
 import { mkdirSync, readdirSync, renameSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { chromium, devices } from '@playwright/test';
 
 const PORT = 3108;
-const BASE_URL = `http://127.0.0.1:${PORT}`;
+const basePath = (process.env.NEXT_PUBLIC_BASE_PATH ?? '').replace(/\/$/, '');
+const BASE_URL = `http://127.0.0.1:${PORT}${basePath}`;
 const root = resolve(import.meta.dirname, '..');
 const assets = resolve(root, 'docs/assets');
 const videoDir = resolve(root, '.media-tmp');
@@ -39,22 +42,10 @@ const largestCanvasRect = page =>
   });
 
 const startServer = async () => {
-  const server = spawn('npx', ['next', 'start', '--hostname', '127.0.0.1', '--port', String(PORT)], {
-    cwd: root,
-    stdio: 'ignore',
-  });
-  const deadline = Date.now() + 60_000;
-  while (Date.now() < deadline) {
-    try {
-      const response = await fetch(BASE_URL);
-      if (response.ok) return server;
-    } catch {
-      // server not up yet
-    }
-    await new Promise(done => setTimeout(done, 500));
-  }
-  server.kill();
-  throw new Error(`production server did not come up on ${BASE_URL}; run "npm run build" first`);
+  const server = createExportServer(resolve(root, 'out'), basePath);
+  server.listen(PORT, '127.0.0.1');
+  await once(server, 'listening');
+  return server;
 };
 
 const captureStills = async browser => {
@@ -98,9 +89,9 @@ const captureDrawingClip = async browser => {
   const rect = await largestCanvasRect(page);
   const at = (x, y) => [rect.left + rect.width * x, rect.top + rect.height * y];
 
-  await page.getByRole('button', { name: 'Drawings', exact: true }).click();
+  await page.locator('[data-sidebar-drawing-tool="line:trend"]').click();
   await page.waitForTimeout(600);
-  await page.getByTestId('drawing-menu').locator('[data-drawing-tool="line:segment"]').click();
+  await page.getByTestId('sidebar-line-menu').locator('[data-sidebar-drawing-tool="line:trend"]').click();
   await page.waitForTimeout(400);
 
   // Draw a trend line, then let the crosshair sweep across it.
@@ -112,9 +103,9 @@ const captureDrawingClip = async browser => {
   await page.waitForTimeout(800);
 
   // Then a four-point ABCD wave, which shows the multi-step drawing model.
-  await page.getByRole('button', { name: 'Drawings', exact: true }).click();
+  await page.locator('[data-sidebar-drawing-tool="wave:three"]').click();
   await page.waitForTimeout(400);
-  await page.getByTestId('drawing-menu').locator('[data-drawing-tool="wave:abcd"]').click();
+  await page.getByTestId('sidebar-wave-menu').locator('[data-sidebar-drawing-tool="wave:abcd"]').click();
   for (const point of [[0.22, 0.56], [0.36, 0.34], [0.51, 0.62], [0.67, 0.38]]) {
     await page.mouse.move(...at(...point), { steps: 20 });
     await page.mouse.click(...at(...point));
@@ -169,14 +160,18 @@ mkdirSync(assets, { recursive: true });
 rmSync(videoDir, { recursive: true, force: true });
 console.log(`starting production server on ${BASE_URL}`);
 const server = await startServer();
-const browser = await chromium.launch();
+let browser;
 try {
+  browser = await chromium.launch();
   await captureStills(browser);
   const webm = await captureDrawingClip(browser);
   await convertToGif(webm);
 } finally {
-  await browser.close();
-  server.kill();
-  rmSync(videoDir, { recursive: true, force: true });
+  try {
+    await browser?.close();
+  } finally {
+    await new Promise(done => server.close(done));
+    rmSync(videoDir, { recursive: true, force: true });
+  }
 }
 console.log('media capture complete');
