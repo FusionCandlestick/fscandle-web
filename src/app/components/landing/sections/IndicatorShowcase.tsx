@@ -28,7 +28,9 @@ export function IndicatorShowcase({ theme, className }: { theme: LandingThemeTok
 
   const codeSnippet = `import { createChart } from 'fscandle';
 
-const chart = createChart('#chart', { style: 'candle', showVolume: true });
+const chart = createChart(container);
+chart.setChartStyle('candle');
+chart.addVolumeSeries();
 chart.setData(btcData);
 
 // EMA(20) trend line on main candlestick price pane

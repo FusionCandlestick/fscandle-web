@@ -26,7 +26,7 @@ export const FAQ_ITEMS: FAQItem[] = [
     category: "Performance",
     question: "How does FusionCandlestick keep rendering fast on large datasets?",
     answer:
-      "Candle bars never touch the browser DOM; they are drawn in a single high-DPI-aware Canvas pass. The data store keeps sorted OHLC with O(1) logical-index conversion, hover lookups are cached rather than re-scanned each frame, and price-extent scans avoid the argument-count limits of Math.min / Math.max spreads. A browser frame benchmark (npm run test:perf:browser) fails the build on median or p95 frame-interval and heap-growth regressions.",
+      "Candle bars never touch the browser DOM; they are drawn in a single high-DPI-aware Canvas pass. The data store keeps sorted OHLC with O(1) logical-index conversion, hover lookups are cached rather than re-scanned each frame, and price-extent scans avoid the argument-count limits of Math.min / Math.max spreads. The optional browser frame benchmark (npm run test:perf:browser) checks median and p95 frame intervals and, when memory metrics are available, heap growth. It must be run separately from the build.",
   },
   {
     category: "Integration",

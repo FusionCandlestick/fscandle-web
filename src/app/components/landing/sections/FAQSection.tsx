@@ -24,7 +24,6 @@ export function FAQSection({ className }: { className?: string }) {
   return (
     <Reveal className={cn("w-full", className)}>
       <section
-        id="faq"
         aria-labelledby="faq-heading"
         className={cn(
           "w-full rounded-2xl p-2 min-[1000px]:p-4 transition-all duration-300",
