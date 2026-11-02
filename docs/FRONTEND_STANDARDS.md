@@ -7,7 +7,7 @@ Dependency versions and commands are defined by `package.json` and its lockfile.
 ## Ownership
 
 - Next.js App Router exports HTML/CSS/JS to `out/`; production has no data API.
-- The engine is the pinned `vendor/fscandle-0.1.0.tgz` artifact. Rendering,
+- The engine is the pinned `vendor/fscandle-0.1.1.tgz` artifact. Rendering,
   indicators and package exports belong to the engine repository. Update the
   artifact using [README](../README.md#develop), preserving its identity and rollback.
 - Workspace state belongs to `src/store/WorkspaceStore.ts`; chart instances and

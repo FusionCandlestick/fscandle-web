@@ -16,7 +16,7 @@ npm ci
 npm run dev
 ```
 
-The engine is pinned to `vendor/fscandle-0.1.0.tgz`. This local candidate
+The engine is pinned to `vendor/fscandle-0.1.1.tgz`. This local candidate
 contains the indicator plugin APIs required by the site; the registry package
 with the same version does not. The lockfile verifies tarball integrity; no sibling
 checkout is needed to install. Local source-directory dependencies and links
