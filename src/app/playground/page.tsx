@@ -27,10 +27,11 @@ import {
   TrendingUp,
   MoveHorizontal,
   Eraser,
+  BarChart2,
 } from "lucide-react";
 
-import type { PriceScaleMode } from "fscandle";
-import type { DrawingLayer } from "fscandle";
+import { IndicatorLibraryModal } from "./IndicatorLibraryModal";
+import type { PriceScaleMode, DrawingLayer } from "fscandle";
 import {
   createDefaultWorkspaceState,
   loadWorkspaceState,
@@ -39,6 +40,7 @@ import {
   saveWorkspaceState,
   uniqueSymbolList,
   type WorkspaceState,
+  type PersistedIndicator,
 } from "@/store/WorkspaceStore";
 import { THEMES, themeCssVars, type ThemeMode } from "../ui/theme";
 import {
@@ -70,6 +72,69 @@ type LayoutMode = "single" | "split-horizontal" | "split-vertical" | "quad-horiz
 const PERIODS: Period[] = ["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w"];
 const DRAWING_COLORS = ["#2962FF", "#F59E0B", "#10B981", "#EF4444", "#8B5CF6", "#F8FAFC"];
 const EMPTY_COMPARE_SYMBOLS: string[] = [];
+
+export interface IndicatorMeta {
+  id: string;
+  name: string;
+  category: "overlay" | "subpane";
+  defaultParams: string;
+  desc: string;
+  author?: string;
+}
+
+type BuiltInIndicatorRow = [id: string, name: string, defaultParams: string, desc: string];
+
+function builtInIndicators(category: IndicatorMeta["category"], rows: BuiltInIndicatorRow[]): IndicatorMeta[] {
+  return rows.map(([id, name, defaultParams, desc]) => ({
+    id,
+    name,
+    category,
+    defaultParams,
+    desc,
+    author: "Built-in",
+  }));
+}
+
+const INDICATOR_CATALOG: IndicatorMeta[] = [
+  // --- Main Chart Overlays ---
+  ...builtInIndicators("overlay", [
+    ["MA", "Moving Average", "20",
+      "Simple moving average plotted directly over candlestick prices."],
+    ["EMA", "Exponential Moving Average", "20",
+      "Weights recent price points more heavily for faster trend identification."],
+    ["BOLL", "Bollinger Bands", "20, 2",
+      "Upper and lower standard deviation bands measuring market volatility."],
+    ["PSAR", "Parabolic SAR", "0.02, 0.2",
+      "Stop and reverse points plotted on candles to capture trailing momentum."],
+    ["VWAP", "Volume Weighted Avg Price", "Session",
+      "Benchmark giving the average price a security traded at based on volume."],
+  ]),
+  // --- Subpane Oscillators ---
+  ...builtInIndicators("subpane", [
+    ["RSI", "Relative Strength Index", "14",
+      "Momentum oscillator measuring speed and change of price moves (0–100)."],
+    ["MACD", "Moving Average Conv / Div", "12, 26, 9",
+      "Trend-following momentum indicator showing relationship between two EMAs."],
+    ["KDJ", "KDJ Stochastic Oscillator", "9, 3, 3",
+      "Comprehensive momentum indicator derived from slow stochastic lines."],
+    ["VOLMA", "Volume Moving Average", "20",
+      "Displays trading volume bars with moving average overlay."],
+    ["ATR", "Average True Range", "14",
+      "Measures market volatility by decomposing the entire range of an asset."],
+    ["WR", "Williams %R", "14",
+      "Momentum indicator measuring overbought and oversold levels (-100 to 0)."],
+    ["CCI", "Commodity Channel Index", "20",
+      "Versatile oscillator used to identify new trends or extreme conditions."],
+    ["ROC", "Rate of Change", "12",
+      "Pure momentum oscillator measuring percentage change between bars."],
+    ["ADX", "Average Directional Index", "14",
+      "Quantifies trend strength regardless of trend direction."],
+    ["OBV", "On-Balance Volume", "Cumulative",
+      "Uses volume flow to predict changes in stock price momentum."],
+    ["STOCHRSI", "Stochastic RSI", "14, 14, 3, 3",
+      "Applies the Stochastic formula to RSI values rather than standard prices."],
+  ]),
+];
 
 const DRAWING_TOOLS = [
   {
@@ -181,7 +246,8 @@ const equalWorkspaceState = (left: WorkspaceState, right: WorkspaceState) => {
     && equalStringArrays(left.watchlist, right.watchlist)
     && equalStringArrays(left.panelSymbols, right.panelSymbols)
     && equalStringArrays(left.recentSymbols, right.recentSymbols)
-    && equalStringMatrix(left.panelCompareSymbols, right.panelCompareSymbols);
+    && equalStringMatrix(left.panelCompareSymbols, right.panelCompareSymbols)
+    && JSON.stringify(left.panelIndicators) === JSON.stringify(right.panelIndicators);
 };
 
 export default function PlaygroundPage() {
@@ -197,6 +263,7 @@ export default function PlaygroundPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [showStyleMenu, setShowStyleMenu] = useState(false);
   const [showSymbolMenu, setShowSymbolMenu] = useState(false);
+  const [showIndicatorModal, setShowIndicatorModal] = useState(false);
   const [isCompactViewport, setIsCompactViewport] = useState(false);
   const [openSidebarTool, setOpenSidebarTool] = useState<string | null>(null);
   const [workspaceState, setWorkspaceState] = useState<WorkspaceState>(() => createDefaultWorkspaceState());
@@ -221,7 +288,6 @@ export default function PlaygroundPage() {
 
   const rootRef = useRef<HTMLDivElement | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
-  const symbolMenuRef = useRef<HTMLDivElement | null>(null);
 
   const mainAdapter = useRef<ChartAdapter | null>(null);
   const panel1 = useRef<ChartAdapter | null>(null);
@@ -232,11 +298,26 @@ export default function PlaygroundPage() {
   const layoutClasses = useMemo(() => {
     const map: Record<LayoutMode, string[]> = {
       single: ["w-full h-full"],
-      "split-horizontal": ["w-1/2 h-full", "w-1/2 h-full"],
-      "split-vertical": ["w-full h-1/2", "w-full h-1/2"],
-      "quad-horizontal": ["w-1/4 h-full", "w-1/4 h-full", "w-1/4 h-full", "w-1/4 h-full"],
-      "quad-vertical": ["w-full h-1/4", "w-full h-1/4", "w-full h-1/4", "w-full h-1/4"],
-      "quad-grid": ["w-1/2 h-1/2", "w-1/2 h-1/2", "w-1/2 h-1/2", "w-1/2 h-1/2"],
+      "split-horizontal": ["w-[calc(50%-0.5px)] h-full", "w-[calc(50%-0.5px)] h-full"],
+      "split-vertical": ["w-full h-[calc(50%-0.5px)]", "w-full h-[calc(50%-0.5px)]"],
+      "quad-horizontal": [
+        "w-[calc(25%-0.75px)] h-full",
+        "w-[calc(25%-0.75px)] h-full",
+        "w-[calc(25%-0.75px)] h-full",
+        "w-[calc(25%-0.75px)] h-full",
+      ],
+      "quad-vertical": [
+        "w-full h-[calc(25%-0.75px)]",
+        "w-full h-[calc(25%-0.75px)]",
+        "w-full h-[calc(25%-0.75px)]",
+        "w-full h-[calc(25%-0.75px)]",
+      ],
+      "quad-grid": [
+        "w-[calc(50%-0.5px)] h-[calc(50%-0.5px)]",
+        "w-[calc(50%-0.5px)] h-[calc(50%-0.5px)]",
+        "w-[calc(50%-0.5px)] h-[calc(50%-0.5px)]",
+        "w-[calc(50%-0.5px)] h-[calc(50%-0.5px)]",
+      ],
     };
     return map[layout];
   }, [layout]);
@@ -279,10 +360,6 @@ export default function PlaygroundPage() {
   };
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
     const mediaQuery = window.matchMedia("(max-width: 767px)");
     const syncViewportMode = () => {
       setIsCompactViewport(mediaQuery.matches);
@@ -358,7 +435,9 @@ export default function PlaygroundPage() {
   }, [openSidebarTool, showSettings, showSymbolMenu, showStyleMenu]);
 
   useEffect(() => {
-    const activeAdapter = activePanelIndex === 0 ? (mainAdapter.current ?? panel1.current) : [panel1.current, panel2.current, panel3.current, panel4.current][activePanelIndex];
+    const activeAdapter = activePanelIndex === 0
+      ? (layout === "single" ? mainAdapter.current : panel1.current)
+      : [panel1.current, panel2.current, panel3.current, panel4.current][activePanelIndex];
     if (!activeAdapter) {
       return;
     }
@@ -423,7 +502,7 @@ export default function PlaygroundPage() {
     setDrawingLayers(first.getDrawingLayers());
     setActiveDrawingLayerId(first.getActiveDrawingLayerId());
   };
-  // The layer panel shows the active panel's layers, so layer actions apply to
+  // The layer panel controls layers on the active panel, so mutations apply to
   // that panel. Layer ids are per chart: applying them to every visible panel
   // acted on layers the user was not looking at.
   const applyLayerMutation = (fn: (adapter: ChartAdapter) => void) => {
@@ -453,6 +532,18 @@ export default function PlaygroundPage() {
     // the event layer that receives the next pointer event owns the tool.
     queueMicrotask(() => applyToVisible((adapter) => adapter.startDrawing(toolId)));
   };
+  const addPanelIndicator = (indicator: PersistedIndicator) => {
+    updateWorkspaceState((current) => {
+      const nextIndicators = current.panelIndicators.map((list, idx) => {
+        if (layout === "single" ? idx === 0 : idx === activePanelIndex) {
+          return [...list, indicator];
+        }
+        return list;
+      });
+      return { ...current, panelIndicators: nextIndicators };
+    });
+  };
+
   const setActivePanel = (panelIndex: number) => {
     if (activePanelIndex === panelIndex) {
       return;
@@ -513,7 +604,7 @@ export default function PlaygroundPage() {
 
     updateWorkspaceState((current) => {
       const nextPanelCompareSymbols = current.panelCompareSymbols.map((symbols, index) => {
-        if (index !== current.activePanelIndex) {
+        if (index !== activePanelIndex) {
           return symbols;
         }
 
@@ -547,9 +638,6 @@ export default function PlaygroundPage() {
   };
   const applySymbolSelection = (nextSymbol: string) => {
     activateWorkspaceSymbol(nextSymbol, { closeMenu: true });
-  };
-  const toggleCompareSymbol = (nextSymbol: string) => {
-    toggleActivePanelCompareSymbol(nextSymbol);
   };
   const updateDrawingDefaults = (defaults: Partial<DrawingDefaults>) => {
     setDrawingDefaults((current) => {
@@ -592,13 +680,74 @@ export default function PlaygroundPage() {
     event.target.value = "";
   };
 
+  const renderSymbolRow = (item: SymbolCatalogEntry, inWatchlist: boolean) => {
+    const isWatched = inWatchlist || watchlistSymbols.includes(item.symbol);
+    const isCompared = compareSymbols.includes(item.symbol);
+    return (
+      <div
+        key={item.symbol}
+        role="button"
+        tabIndex={0}
+        data-testid={`${inWatchlist ? "watchlist-symbol" : "symbol-search-result"}-${item.symbol}`}
+        onClick={() => applySymbolSelection(item.symbol)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            applySymbolSelection(item.symbol);
+          }
+        }}
+        className={menuItem(symbol === item.symbol)}
+      >
+        <div className="flex items-center justify-between gap-1">
+          <div className="min-w-0 flex items-baseline gap-1 cursor-pointer">
+            <div className="shrink-0 text-[12px] font-semibold uppercase">{item.symbol}</div>
+            <div className={`truncate text-[10px] ${text.muted}`}>{item.name}</div>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            {canUseCompareSeries && item.symbol !== symbol && (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  toggleActivePanelCompareSymbol(item.symbol);
+                }}
+                className={toggleButton(isCompared, "sm", "px-2")}
+                title={isCompared ? `Remove ${item.symbol} comparison` : `Add ${item.symbol} as compare line`}
+              >
+                {isCompared ? "Compared" : "+ Compare"}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                if (isWatched) {
+                  removeWatchlistSymbol(item.symbol);
+                } else {
+                  addWatchlistSymbol(item.symbol);
+                }
+              }}
+              aria-label={inWatchlist ? "Remove" : isWatched ? "Remove from watchlist" : "Add to watchlist"}
+              className={iconButton("ghost", "sm")}
+              title={isWatched ? `Remove ${item.symbol} from watchlist` : `Add ${item.symbol} to watchlist`}
+            >
+              {inWatchlist
+                ? <span className="text-[16px] leading-none">×</span>
+                : <span className="text-[12px] leading-none font-semibold">{isWatched ? "★" : "+"}</span>}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div ref={rootRef} style={themeVars} className={`h-screen w-screen ${surface.shell} ${text.main} overflow-hidden flex flex-col`}>
       <div className={`relative z-[5000] flex ${isCompactViewport ? "flex-wrap items-start justify-start gap-1" : "items-center justify-between gap-1 whitespace-nowrap"} overflow-visible border-b px-2 py-1.5 ${surface.chrome}`}>
         <input ref={importInputRef} type="file" accept=".json,application/json" className="hidden" onChange={onImportDrawings} />
 
         <div className={isCompactViewport ? "flex w-full min-w-0 flex-wrap items-center gap-1 pb-1" : "flex items-center gap-1 shrink-0"}>
-          <div ref={symbolMenuRef} data-transient-surface="symbol" className="relative">
+          <div data-transient-surface="symbol" className="relative">
             <div className="relative">
               <input
                 value={symbolSearch}
@@ -640,66 +789,7 @@ export default function PlaygroundPage() {
 
                     <div className={`space-y-1 overflow-y-auto ${isCompactViewport ? "max-h-48" : "max-h-72 pr-0.5"}`}>
                       {filteredSymbolResults.length > 0 ? (
-                        filteredSymbolResults.map((item) => {
-                          const isWatched = watchlistSymbols.includes(item.symbol);
-                          const isActive = symbol === item.symbol;
-                          const isCompared = compareSymbols.includes(item.symbol);
-
-                          return (
-                            <div
-                              key={item.symbol}
-                              role="button"
-                              tabIndex={0}
-                              data-testid={`symbol-search-result-${item.symbol}`}
-                              onClick={() => applySymbolSelection(item.symbol)}
-                              onKeyDown={(event) => {
-                                if (event.key === "Enter" || event.key === " ") {
-                                  event.preventDefault();
-                                  applySymbolSelection(item.symbol);
-                                }
-                              }}
-                              className={menuItem(isActive)}
-                            >
-                              <div className="flex items-center justify-between gap-1">
-                                <div className="min-w-0 flex items-baseline gap-1 cursor-pointer">
-                                  <div className="shrink-0 text-[12px] font-semibold uppercase">{item.symbol}</div>
-                                  <div className={`truncate text-[10px] ${text.muted}`}>{item.name}</div>
-                                </div>
-                                <div className="flex items-center gap-1 shrink-0">
-                                  {canUseCompareSeries && item.symbol !== symbol && (
-                                    <button
-                                      type="button"
-                                      onClick={(event) => {
-                                        event.stopPropagation();
-                                        toggleCompareSymbol(item.symbol);
-                                      }}
-                                      className={toggleButton(isCompared, "sm", "px-2")}
-                                      title={isCompared ? `Remove ${item.symbol} comparison` : `Add ${item.symbol} as compare line`}
-                                    >
-                                      {isCompared ? "Compared" : "+ Compare"}
-                                    </button>
-                                  )}
-                                  <button
-                                    type="button"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      if (isWatched) {
-                                        removeWatchlistSymbol(item.symbol);
-                                      } else {
-                                        addWatchlistSymbol(item.symbol);
-                                      }
-                                    }}
-                                    aria-label={isWatched ? "Remove from watchlist" : "Add to watchlist"}
-                                    className={`${iconButton("ghost", "sm")}`}
-                                    title={isWatched ? `Remove ${item.symbol} from watchlist` : `Add ${item.symbol} to watchlist`}
-                                  >
-                                    <span className="text-[12px] leading-none font-semibold">{isWatched ? "★" : "+"}</span>
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })
+                        filteredSymbolResults.map((item) => renderSymbolRow(item, false))
                       ) : (
                         <div className={emptyState}>
                           No symbols match {symbolSearch || "this query"}.
@@ -718,61 +808,7 @@ export default function PlaygroundPage() {
 
                     <div className={`space-y-1 overflow-y-auto ${isCompactViewport ? "max-h-40" : "max-h-72 pl-0.5"}`}>
                       {watchlistEntries.length > 0 ? (
-                        watchlistEntries.map((item) => {
-                          const isActive = symbol === item.symbol;
-                          const isCompared = compareSymbols.includes(item.symbol);
-
-                          return (
-                            <div
-                              key={item.symbol}
-                              role="button"
-                              tabIndex={0}
-                              data-testid={`watchlist-symbol-${item.symbol}`}
-                              onClick={() => applySymbolSelection(item.symbol)}
-                              onKeyDown={(event) => {
-                                if (event.key === "Enter" || event.key === " ") {
-                                  event.preventDefault();
-                                  applySymbolSelection(item.symbol);
-                                }
-                              }}
-                              className={menuItem(isActive)}
-                            >
-                              <div className="flex items-center justify-between gap-1">
-                                <div className="min-w-0 flex items-baseline gap-1 cursor-pointer">
-                                  <div className="shrink-0 text-[12px] font-semibold uppercase">{item.symbol}</div>
-                                  <div className={`truncate text-[10px] ${text.muted}`}>{item.name}</div>
-                                </div>
-                                <div className="flex items-center gap-1 shrink-0">
-                                  {canUseCompareSeries && item.symbol !== symbol && (
-                                    <button
-                                      type="button"
-                                      onClick={(event) => {
-                                        event.stopPropagation();
-                                        toggleCompareSymbol(item.symbol);
-                                      }}
-                                      className={toggleButton(isCompared, "sm", "px-2")}
-                                      title={isCompared ? `Remove ${item.symbol} comparison` : `Add ${item.symbol} as compare line`}
-                                    >
-                                      {isCompared ? "Compared" : "+ Compare"}
-                                    </button>
-                                  )}
-                                  <button
-                                    type="button"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      removeWatchlistSymbol(item.symbol);
-                                    }}
-                                    aria-label="Remove"
-                                    className={iconButton("ghost", "sm")}
-                                    title={`Remove ${item.symbol} from watchlist`}
-                                  >
-                                    <span className="text-[16px] leading-none">×</span>
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })
+                        watchlistEntries.map((item) => renderSymbolRow(item, true))
                       ) : (
                         <div className={emptyState}>
                           Add symbols from the search column to build your watchlist.
@@ -822,6 +858,26 @@ export default function PlaygroundPage() {
             <option value="bar">Bar</option>
           </select>
 
+          {/* Indicators Modal Trigger Button */}
+          <button
+            type="button"
+            onClick={() => {
+              setShowIndicatorModal(true);
+              setShowSettings(false);
+              setShowStyleMenu(false);
+              setShowSymbolMenu(false);
+            }}
+            className={`flex items-center gap-1.5 h-8 px-2.5 rounded-md border text-xs font-semibold transition-all duration-150 ${isCompactViewport ? "order-1" : ""} ${
+              showIndicatorModal
+                ? "border-blue-500 bg-blue-600 text-white"
+                : "border-[color:var(--border)] bg-[var(--control-bg)] text-[color:var(--text-main)] hover:bg-[var(--control-hover-bg)]"
+            }`}
+            title="Indicators & Custom Formulas"
+          >
+            <BarChart2 size={14} className="shrink-0" />
+            <span>Indicators</span>
+          </button>
+
           {/* Active Comparison Chips in Top Toolbar */}
           {canUseCompareSeries && compareSymbols.length > 0 && (
             <div className="flex items-center gap-1 shrink-0">
@@ -837,7 +893,7 @@ export default function PlaygroundPage() {
                     <span className="tracking-wide">{item}</span>
                     <button
                       type="button"
-                      onClick={() => toggleCompareSymbol(item)}
+                      onClick={() => toggleActivePanelCompareSymbol(item)}
                       className="ml-0.5 text-xs text-[color:var(--text-muted)] hover:text-red-400 font-semibold"
                       title={`Remove comparison for ${item}`}
                     >
@@ -930,7 +986,7 @@ export default function PlaygroundPage() {
             <Maximize2 size={18} />
           </button>
 
-          <div className={controlGroup("lg", "gap-0.5 px-1")} title="Replay date range">
+          <div className={controlGroup("lg", `gap-0.5 px-1 ${isCompactViewport ? "order-2" : ""}`)} title="Replay date range">
             <input aria-label="Replay start date" type="date" value={replayStartDate} max={replayEndDate} onChange={(event) => { setReplayStartDate(event.target.value); setReplayPlaying(false); setReplayInitialized(false); }} className="ui-date h-7 w-[101px] bg-transparent px-1 text-[10px] text-[color:var(--text-main)] outline-none" />
             <span aria-hidden="true" className={`px-0.5 text-[10px] ${text.muted}`}>–</span>
             <input aria-label="Replay end date" type="date" value={replayEndDate} min={replayStartDate} onChange={(event) => { setReplayEndDate(event.target.value); setReplayPlaying(false); setReplayInitialized(false); }} className="ui-date h-7 w-[101px] bg-transparent px-1 text-[10px] text-[color:var(--text-main)] outline-none" />
@@ -942,8 +998,8 @@ export default function PlaygroundPage() {
               onClick={() => {
                 if (replayPlaying) { setReplayPlaying(false); return; }
                 if (!replayInitialized) {
-                  const start = new Date(`${replayStartDate}T00:00:00`).getTime();
-                  const end = new Date(`${replayEndDate}T23:59:59.999`).getTime();
+                  const start = new Date(`${replayStartDate}T00:00:00Z`).getTime();
+                  const end = new Date(`${replayEndDate}T23:59:59.999Z`).getTime();
                   applyToVisible((adapter) => adapter.setReplayRange(start, end));
                   setReplayInitialized(true);
                 }
@@ -1255,7 +1311,7 @@ export default function PlaygroundPage() {
           </div>
         </aside>
 
-        <div className="flex-1 min-w-0 bg-[var(--content-bg)] flex flex-wrap gap-0 overflow-hidden">
+        <div className="flex-1 min-w-0 bg-black flex flex-wrap gap-[1px] overflow-hidden">
           {layoutClasses.map((className, index) => (
             <div
               key={`${layout}-${index}`}
@@ -1268,9 +1324,9 @@ export default function PlaygroundPage() {
                 }
                 setActivePanel(index);
               }}
-              className={`${className} ${surface.panel} relative overflow-hidden ${activePanelIndex === index ? "ring-1 ring-blue-500/80" : ""}`}
+              className={`${className} bg-[var(--panel-bg)] border-none relative overflow-hidden ${activePanelIndex === index ? "ring-1 ring-blue-500/80" : ""}`}
             >
-              <div className="absolute bottom-0 right-0 z-30 flex h-[22px] w-[55px] items-center justify-center pointer-events-none">
+              <div className="absolute bottom-0 right-0 z-[3000] flex h-[22px] w-[55px] items-center justify-center pointer-events-none">
                 <button
                   type="button"
                   onClick={(e) => {
@@ -1291,6 +1347,7 @@ export default function PlaygroundPage() {
               <span className="sr-only">P{index + 1} · {panelSymbols[index]}</span>
 
               <ChartViewport
+                key={`${index}-${hasHydratedWorkspace}`}
                 symbol={panelSymbols[index]}
                 period={period}
                 activeTool={activeTool}
@@ -1303,11 +1360,14 @@ export default function PlaygroundPage() {
                 drawingDefaults={drawingDefaults}
                 compareSymbols={canUseCompareSeries ? (panelCompareSymbols[index] ?? EMPTY_COMPARE_SYMBOLS) : EMPTY_COMPARE_SYMBOLS}
                 chartBackground={chartBackground}
+                initialIndicators={workspaceState.panelIndicators?.[index]}
+                onIndicatorRemoved={(id) => updateWorkspaceState(current => ({
+                  ...current,
+                  panelIndicators: current.panelIndicators.map((list, panelIndex) => panelIndex === index ? list.filter(item => item.id !== id) : list),
+                }))}
                 onDrawingEnd={() => setActiveTool(undefined)}
                 onReady={(adapter) => {
-                  if (layout === "single" && index === 0) {
-                    mainAdapter.current = adapter;
-                  }
+                  if (layout === "single" && index === 0) mainAdapter.current = adapter;
                   assignPanelAdapter(index, adapter);
                   // Panels rebuild their chart on style or period changes. Only the
                   // active panel's layers belong in the layer panel; panel 1 used
@@ -1322,6 +1382,23 @@ export default function PlaygroundPage() {
           ))}
         </div>
       </div>
+
+      {showIndicatorModal && (
+        <IndicatorLibraryModal
+          catalog={INDICATOR_CATALOG}
+          onClose={() => setShowIndicatorModal(false)}
+          onAdd={(names) => {
+            const adapter = layout === "single" ? mainAdapter.current : [panel1.current, panel2.current, panel3.current, panel4.current][activePanelIndex];
+            if (!adapter) throw new Error("Chart is not ready");
+            for (const name of names) {
+              const meta = INDICATOR_CATALOG.find(item => item.id === name);
+              const indicator = { id: `${name.toLowerCase()}_${crypto.randomUUID()}`, name, newPane: meta?.category !== "overlay" };
+              adapter.addIndicator(name, { id: indicator.id, newPane: indicator.newPane });
+              addPanelIndicator(indicator);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

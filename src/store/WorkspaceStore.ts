@@ -1,9 +1,18 @@
+export interface PersistedIndicator {
+  id: string;
+  name: string;
+  newPane?: boolean;
+  calcParams?: number[];
+  formula?: string;
+}
+
 export interface WorkspaceState {
   watchlist: string[];
   panelSymbols: string[];
   recentSymbols: string[];
   activePanelIndex: number;
   panelCompareSymbols: string[][];
+  panelIndicators: PersistedIndicator[][];
 }
 
 const WORKSPACE_STORAGE_KEY = "fscandle_workspace_state_v2";
@@ -17,43 +26,32 @@ const MAX_RECENT_SYMBOLS = 8;
 const normalizeSymbol = (value: string) => value.trim().toUpperCase();
 
 export const uniqueSymbolList = (symbols: string[]) => {
-  const seen = new Set<string>();
-  const next: string[] = [];
-
-  symbols.forEach((symbol) => {
-    const normalized = normalizeSymbol(symbol);
-    if (!normalized || seen.has(normalized)) {
-      return;
-    }
-
-    seen.add(normalized);
-    next.push(normalized);
-  });
-
-  return next;
+  return [...new Set(symbols.map(normalizeSymbol).filter(Boolean))];
 };
 
 const normalizePanelSymbols = (panelSymbols?: string[]) => {
-  const next = [...DEFAULT_PANEL_SYMBOLS];
-
-  uniqueSymbolList(panelSymbols ?? [])
-    .slice(0, PANEL_COUNT)
-    .forEach((symbol, index) => {
-      next[index] = symbol;
-    });
-
-  return next;
+  return DEFAULT_PANEL_SYMBOLS.map((fallback, index) =>
+    normalizeSymbol(panelSymbols?.[index] ?? fallback) || fallback,
+  );
 };
 
 const normalizePanelCompareSymbols = (panelCompareSymbols: string[][] | undefined, panelSymbols: string[]) => {
-  const next = Array.from({ length: PANEL_COUNT }, (_, index) => {
+  return Array.from({ length: PANEL_COUNT }, (_, index) => {
     const source = panelCompareSymbols?.[index] ?? DEFAULT_COMPARE_SYMBOLS[index] ?? [];
     return uniqueSymbolList(source)
       .filter((symbol) => symbol !== panelSymbols[index])
       .slice(0, 5);
   });
+};
 
-  return next;
+const DEFAULT_PANEL_INDICATORS: PersistedIndicator[][] = [[], [], [], []];
+
+const normalizePanelIndicators = (panelIndicators?: PersistedIndicator[][]): PersistedIndicator[][] => {
+  return Array.from({ length: PANEL_COUNT }, (_, index) => {
+    const list = panelIndicators?.[index];
+    if (!Array.isArray(list)) return [];
+    return list.filter((item): item is PersistedIndicator => Boolean(item && typeof item.id === 'string' && typeof item.name === 'string' && !item.formula));
+  });
 };
 
 export function createDefaultWorkspaceState(): WorkspaceState {
@@ -63,6 +61,7 @@ export function createDefaultWorkspaceState(): WorkspaceState {
     recentSymbols: [DEFAULT_PANEL_SYMBOLS[0]],
     activePanelIndex: 0,
     panelCompareSymbols: DEFAULT_COMPARE_SYMBOLS.map((symbols) => [...symbols]),
+    panelIndicators: DEFAULT_PANEL_INDICATORS.map((items) => [...items]),
   };
 }
 
@@ -85,6 +84,7 @@ export function normalizeWorkspaceState(
     recentSymbols: uniqueSymbolList([...(state?.recentSymbols ?? []), panelSymbols[activePanelIndex]]).slice(0, MAX_RECENT_SYMBOLS),
     activePanelIndex,
     panelCompareSymbols: normalizePanelCompareSymbols(state?.panelCompareSymbols, panelSymbols),
+    panelIndicators: normalizePanelIndicators(state?.panelIndicators),
   };
 }
 

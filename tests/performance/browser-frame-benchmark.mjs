@@ -13,11 +13,14 @@
  * this is a smoke test for "the renderer collapsed", not a precision instrument,
  * and CI hardware varies. Treat a failure as "look at it", not "revert".
  */
-import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { resolve } from 'node:path';
+import { createExportServer } from '../../scripts/serve-export.mjs';
 import { chromium } from '@playwright/test';
 
 const PORT = 3109;
-const BASE_URL = `http://127.0.0.1:${PORT}`;
+const basePath = (process.env.NEXT_PUBLIC_BASE_PATH ?? '').replace(/\/$/, '');
+const BASE_URL = `http://127.0.0.1:${PORT}${basePath}`;
 
 /** A dropped-frame budget rather than an average: stutter is what users notice. */
 const THRESHOLDS = {
@@ -30,20 +33,10 @@ const THRESHOLDS = {
 };
 
 const startServer = async () => {
-  const server = spawn('npx', ['next', 'start', '--hostname', '127.0.0.1', '--port', String(PORT)], {
-    stdio: 'ignore',
-  });
-  const deadline = Date.now() + 60_000;
-  while (Date.now() < deadline) {
-    try {
-      if ((await fetch(BASE_URL)).ok) return server;
-    } catch {
-      // not up yet
-    }
-    await new Promise(done => setTimeout(done, 500));
-  }
-  server.kill();
-  throw new Error(`server did not start on ${BASE_URL}; run "npm run build" first`);
+  const server = createExportServer(resolve(import.meta.dirname, '../../out'), basePath);
+  server.listen(PORT, '127.0.0.1');
+  await once(server, 'listening');
+  return server;
 };
 
 const percentile = (sorted, fraction) => sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * fraction))];
@@ -55,10 +48,11 @@ const heapMb = async page =>
   });
 
 const server = await startServer();
-const browser = await chromium.launch({ args: ['--enable-precise-memory-info'] });
+let browser;
 let failures = [];
 
 try {
+  browser = await chromium.launch({ args: ['--enable-precise-memory-info'] });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   await page.goto(`${BASE_URL}/playground`);
   await page.evaluate(() => localStorage.clear());
@@ -104,11 +98,14 @@ try {
   }
   await page.mouse.up();
 
-  // Zoom: wheel in and out over the chart.
+  // Zoom: Ctrl+wheel in and out over the chart.
+  await page.keyboard.down('Control');
   for (let step = 0; step < 30; step += 1) {
     await page.mouse.wheel(0, step % 2 === 0 ? -120 : 120);
     await page.waitForTimeout(8);
   }
+
+  await page.keyboard.up('Control');
 
   // Crosshair: continuous hover, the most frequent repaint path.
   for (let step = 0; step < 40; step += 1) {
@@ -152,8 +149,11 @@ try {
     console.warn('performance.memory unavailable; heap growth not checked');
   }
 } finally {
-  await browser.close();
-  server.kill();
+  try {
+    await browser?.close();
+  } finally {
+    await new Promise(done => server.close(done));
+  }
 }
 
 if (failures.length > 0) {

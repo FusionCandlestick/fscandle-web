@@ -1,26 +1,19 @@
 {
   "symbol": "BTC",
-  "source": "OptionsHolyGrail daily cache (Yahoo); intraday synthesised from daily OHLC",
+  "source": "Financial Modeling Prep (FMP) Official Market API",
   "window": {
     "start": "2025-01-01",
-    "end": "2025-12-21"
+    "end": "2025-12-31"
   },
   "intervals": {
-    "1day": 355,
-    "1week": 51,
-    "1min": 1000,
-    "5min": 1000,
-    "15min": 1000,
-    "30min": 1000,
-    "1hour": 1000,
-    "4hour": 1000
+    "1day": 365,
+    "1week": 52,
+    "1min": 4320,
+    "5min": 2880,
+    "15min": 4320,
+    "30min": 1440,
+    "1hour": 2160,
+    "4hour": 1080
   },
-  "synthetic": [
-    "1min",
-    "5min",
-    "15min",
-    "30min",
-    "1hour",
-    "4hour"
-  ]
+  "synthetic": []
 }

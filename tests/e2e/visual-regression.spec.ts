@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { waitForCanvas } from './helpers';
 
 /**
  * Screenshot regression for the two public routes.
@@ -19,10 +20,7 @@ import { expect, test } from '@playwright/test';
  */
 
 const settleChart = async (page: import('@playwright/test').Page) => {
-  await page.waitForSelector('canvas');
-  await page.waitForFunction(() =>
-    [...document.querySelectorAll('canvas')].some(canvas => canvas.width > 0 && canvas.height > 0),
-  );
+  await waitForCanvas(page);
   // Park the pointer off-canvas so a hover crosshair cannot bleed into the shot.
   await page.mouse.move(0, 0);
   await page.waitForTimeout(1200);

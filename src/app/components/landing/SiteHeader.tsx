@@ -56,13 +56,13 @@ export function SiteHeader() {
             <GitHubIcon size={17} />
           </a>
           <ThemeToggle />
-          <Link href="/playground" className={cn(button("primary", "touch", "hidden gap-1.5 px-4 font-semibold sm:inline-flex"))}>
+          <Link href="/playground" className={button("primary", "touch", "hidden gap-1.5 px-4 font-semibold sm:inline-flex")}>
             <CandlestickChart size={16} />
             Playground
           </Link>
           <button
             type="button"
-            className={cn(button("subtle", "touch", "md:hidden"))}
+            className={button("subtle", "touch", "min-[1000px]:hidden")}
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             aria-expanded={menuOpen}
             aria-controls="lp-mobile-nav"
@@ -76,7 +76,7 @@ export function SiteHeader() {
       {menuOpen ? (
         <nav
           id="lp-mobile-nav"
-          className={cn("flex flex-col gap-1 border-t px-5 py-3 md:hidden", surface.chrome)}
+          className={cn("flex flex-col gap-1 border-t px-5 py-3 min-[1000px]:hidden", surface.chrome)}
         >
           {NAV_LINKS.map((link) => (
             <a
@@ -91,7 +91,7 @@ export function SiteHeader() {
           <Link
             href="/playground"
             onClick={() => setMenuOpen(false)}
-            className={cn(button("primary", "touch", "mt-2 justify-center gap-1.5 font-semibold"))}
+            className={button("primary", "touch", "mt-2 justify-center gap-1.5 font-semibold")}
           >
             <CandlestickChart size={16} />
             Playground

@@ -1,5 +1,5 @@
 /**
- * Synthetic OHLC data generation for landing-page chart demos. Pure
+ * Bundled historical fixtures and synthetic OHLC for landing demos. Pure
  * functions, no React/canvas dependency — safe to import eagerly from any
  * section (including ones whose chart is otherwise lazy-loaded), since this
  * module alone costs nothing to parse.
@@ -32,13 +32,13 @@ const seededRng = (n: number) => {
 const symbolSeed = (symbol: string) => symbol.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
 
 const basePriceBySymbol = (symbol: string) => {
-  if (symbol.includes("BTC")) return 67450;
+  if (symbol.includes("BTC")) return 87498;
   if (symbol.includes("ETH")) return 3480;
-  if (symbol.includes("SOL")) return 158;
-  if (symbol.includes("NVDA")) return 124.5;
-  if (symbol.includes("AAPL")) return 224.2;
-  if (symbol.includes("QQQ")) return 482.6;
-  if (symbol.includes("SPY")) return 562.4;
+  if (symbol.includes("SOL")) return 188;
+  if (symbol.includes("NVDA")) return 186.5;
+  if (symbol.includes("AAPL")) return 271.9;
+  if (symbol.includes("QQQ")) return 614.3;
+  if (symbol.includes("SPY")) return 681.9;
   return 500;
 };
 
@@ -102,33 +102,12 @@ const normalizeData = (data: KLineData[]): KLineData[] => {
 };
 
 export function buildCompareData(symbol: string, period: Period, count: number) {
-  if (period === "1d") {
-    const refData = SPY_2025_DAILY_DATA.slice(-count);
-    let raw: KLineData[];
-    if (symbol.includes("BTC")) {
-      raw = refData.map((ref) => {
-        const btcItem =
-          BTC_2025_DAILY_DATA.find((b) => b.timestamp === ref.timestamp) ||
-          BTC_2025_DAILY_DATA.reduce((prev, curr) =>
-            Math.abs(curr.timestamp - ref.timestamp) < Math.abs(prev.timestamp - ref.timestamp) ? curr : prev,
-          );
-        return {
-          ...btcItem,
-          timestamp: ref.timestamp,
-        };
-      });
-    } else if (symbol.includes("SPY")) {
-      raw = SPY_2025_DAILY_DATA.slice(-count);
-    } else if (symbol.includes("QQQ")) {
-      raw = QQQ_2025_DAILY_DATA.slice(-count);
-    } else if (symbol.includes("NVDA")) {
-      raw = NVDA_2025_DAILY_DATA.slice(-count);
-    } else if (symbol.includes("AAPL")) {
-      raw = AAPL_2025_DAILY_DATA.slice(-count);
-    } else {
-      raw = generateData(symbol, period, count);
-    }
-    return normalizeData(raw);
+  if (period === "1d" && symbol.includes("BTC")) {
+    const data = SPY_2025_DAILY_DATA.slice(-count).flatMap(({ timestamp }) => {
+      const bar = BTC_2025_DAILY_DATA.find((item) => item.timestamp === timestamp);
+      return bar ? [bar] : [];
+    });
+    return normalizeData(data);
   }
   return normalizeData(generateData(symbol, period, count));
 }
@@ -177,7 +156,7 @@ const drawingOverlayFactoryFor = (kind: DrawingOverlayKind) =>
     const v = (f: number) => 0.34 + f * 0.62;
     const trendLowA = extrema(data, v(0.02), v(0.14), "low");
     const trendLowB = extrema(data, v(0.48), v(0.60), "low");
-    const fibLow = extrema(data, v(0.02), v(0.14), "low");
+    const fibLow = trendLowA;
     const fibHigh = extrema(data, v(0.34), v(0.48), "high");
     const channelLowA = extrema(data, v(0.42), v(0.52), "low");
     const channelLowB = extrema(data, v(0.74), v(0.84), "low");

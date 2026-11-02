@@ -27,6 +27,11 @@ Status: v0.1.0. The public API is 0.x and may change between minor versions.
   compare series, watchlist, layouts, screenshot, fullscreen, symbol switching.
 - Every route is prerendered to static HTML; there is no server runtime.
 
+Bundled chart data is demonstrative. Per-symbol manifests declare daily cache
+inputs and synthetic intraday bars. The app does not expose complete historical
+identity, currency, adjustment or bar-availability evidence; replay is not a
+point-in-time research or execution receipt.
+
 ## Engine capabilities
 
 - Series renderers (8): candlestick, hollow candle, Heikin-Ashi, OHLC bar,
@@ -41,8 +46,8 @@ Status: v0.1.0. The public API is 0.x and may change between minor versions.
   descriptors with draw/select/click/drag/remove lifecycle callbacks.
 - Explicit `Period` / `TradingSession` model with timezone-aware axis
   labelling and session-aware gap compression (e.g. `cn-futures-night`).
-- Nine packaged locale dictionaries (en-US, zh-CN, zh-TW, ja-JP, ko-KR,
-  de-DE, es-ES, fr-FR, ru-RU) with fallback resolution.
+- Three packaged locale dictionaries (en-US, zh-CN, zh-TW), with runtime
+  registration and fallback resolution.
 - Typed event subscriptions: click, double click, context menu, crosshair
   move, visible range, size, overlay change, data change.
 - Multi-touch pinch-to-zoom and two-finger pan.
@@ -51,10 +56,10 @@ Status: v0.1.0. The public API is 0.x and may change between minor versions.
 
 The project publishes no benchmarked production performance guarantee for v0.1.
 Every bar is drawn in one Canvas pass with no per-bar DOM nodes; drawing is
-device-pixel aware. A browser frame benchmark fails the build on median/p95
-frame-interval and heap-growth regressions; the engine survives large datasets
-in its own stability probe. Treat any specific FPS or latency figure as
-unverified unless it comes from that harness.
+device-pixel aware. The optional `npm run test:perf:browser` command checks
+median/p95 frame intervals and, when available, heap growth. CI and deployment
+run unit tests and a static build; they do not run this browser benchmark.
+Specific FPS, latency or large-dataset stability claims require an actual receipt.
 
 ## Links
 

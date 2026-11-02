@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
-import { FAQ_ITEMS } from "./components/landing/faq-data";
 
 // Outfit is the brand wordmark face (geometric, OFL). Exposed as --font-display
 // for the logo lockup and headings; body copy stays on the system stack the
@@ -115,15 +114,6 @@ const jsonLdGraph = {
         "Timezone-aware axis labelling, session-aware gap compression, and bundled English and Chinese (Simplified & Traditional) locale dictionaries with a runtime registration API for any other language",
         "Single Canvas render loop with no per-bar DOM nodes and high-DPI aware drawing",
       ],
-    },
-    {
-      "@type": "FAQPage",
-      "@id": "https://fusioncandlestick.dev/#faq",
-      mainEntity: FAQ_ITEMS.map((item) => ({
-        "@type": "Question",
-        name: item.question,
-        acceptedAnswer: { "@type": "Answer", text: item.answer },
-      })),
     },
     {
       "@type": "SoftwareSourceCode",

@@ -1,12 +1,4 @@
-/**
- * Single source of truth for the landing FAQ.
- *
- * Consumed both by `FAQSection` (visible accordion) and by the JSON-LD
- * `FAQPage` graph in `app/layout.tsx`. Google requires the structured data to
- * match the visible content, so there is exactly one list and both readers
- * import it. Plain `.ts`, no `"use client"`, so the server layout can import
- * it without pulling a client component into the server graph.
- */
+/** Shared questions for the visible homepage FAQ and its colocated JSON-LD. */
 
 export interface FAQItem {
   question: string;
@@ -26,7 +18,7 @@ export const FAQ_ITEMS: FAQItem[] = [
     category: "Performance",
     question: "How does FusionCandlestick keep rendering fast on large datasets?",
     answer:
-      "Candle bars never touch the browser DOM; they are drawn in a single high-DPI-aware Canvas pass. The data store keeps sorted OHLC with O(1) logical-index conversion, hover lookups are cached rather than re-scanned each frame, and price-extent scans avoid the argument-count limits of Math.min / Math.max spreads. A browser frame benchmark (npm run test:perf:browser) fails the build on median or p95 frame-interval and heap-growth regressions.",
+      "Candle bars never touch the browser DOM; they are drawn in a single high-DPI-aware Canvas pass. The data store keeps sorted OHLC with O(1) logical-index conversion, hover lookups are cached rather than re-scanned each frame, and price-extent scans avoid the argument-count limits of Math.min / Math.max spreads. The optional browser frame benchmark (npm run test:perf:browser) checks median and p95 frame intervals and, when memory metrics are available, heap growth. It must be run separately from the build.",
   },
   {
     category: "Integration",

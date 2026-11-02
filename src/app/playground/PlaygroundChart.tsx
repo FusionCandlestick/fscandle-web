@@ -2,11 +2,11 @@
 
 import { useEffect, useLayoutEffect, useRef } from "react";
 
-import { FusionCandlestickChart, type DrawingLayer } from "fscandle";
-import type { PriceScaleMode } from "fscandle";
-import type { KLineData } from "fscandle";
+import { FusionCandlestickChart, mergeSymbolContextEventMarkers, type DrawingLayer, type PriceScaleMode, type KLineData, type SymbolContextEvent } from "fscandle";
+import { pluginTemplates } from "./indicatorPlugins";
 import { THEMES, type ThemeMode } from "../ui/theme";
 import { asset } from "../lib/asset";
+import type { PersistedIndicator } from "@/store/WorkspaceStore";
 
 export type Period = "1m" | "5m" | "15m" | "30m" | "1h" | "4h" | "1d" | "1w";
 export type ChartStyle = "candle" | "hollow" | "line" | "baseline" | "area" | "ha" | "bar";
@@ -38,6 +38,9 @@ export interface ChartAdapter {
   screenshot: () => Promise<string | null>;
   setReplayRange: (startTimestamp: number, endTimestamp: number) => void;
   replayStep: () => boolean;
+  addIndicator: (name: string, options?: { paneId?: string; id?: string; calcParams?: number[]; newPane?: boolean }) => void;
+  removeIndicator: (paneId: string, indicatorId: string) => void;
+  getRegisteredIndicators: () => Array<{ shortName: string; name: string }>;
 }
 
 const PERIOD_FILES: Record<Period, string> = {
@@ -60,11 +63,32 @@ interface HistoricalFileRow {
   volume?: number;
 }
 
-// FMP timestamps are New York exchange wall-clock values without an offset.
-// Encoding them as UTC preserves the displayed session time consistently in
-// every browser timezone without changing bar order or OHLC values.
+// Bundled offset-free dates are encoded as UTC for consistent chart labels.
+// This display convention does not establish a provider timezone or the real
+// UTC instant; the manifests also identify synthetic intraday inputs.
 const exchangeWallClockTimestamp = (value: string): number => {
   return Date.parse(`${value.replace(" ", "T")}Z`);
+};
+
+const snapEventsToCandles = (candles: KLineData[], events: SymbolContextEvent[]): SymbolContextEvent[] => {
+  if (candles.length === 0 || events.length === 0) return events;
+  const candleTimes = candles.map((c) => c.timestamp);
+  const candleInterval = candles.length > 1 ? Math.abs(candles[1].timestamp - candles[0].timestamp) : 86400000;
+  return events.map((ev) => {
+    let bestTs = ev.timestamp;
+    let minDiff = Infinity;
+    for (let i = 0; i < candleTimes.length; i++) {
+      const diff = Math.abs(candleTimes[i] - ev.timestamp);
+      if (diff < minDiff) {
+        minDiff = diff;
+        bestTs = candleTimes[i];
+      }
+    }
+    if (minDiff <= Math.max(candleInterval * 1.5, 86400000 * 2)) {
+      return { ...ev, timestamp: bestTs };
+    }
+    return ev;
+  });
 };
 
 const loadHistoricalData = async (symbol: string, period: Period): Promise<KLineData[]> => {
@@ -74,14 +98,29 @@ const loadHistoricalData = async (symbol: string, period: Period): Promise<KLine
   );
   if (!response.ok) return [];
   const rows = await response.json() as HistoricalFileRow[];
-  return rows.map((row) => ({
+  const candles: KLineData[] = rows.map((row) => ({
     timestamp: exchangeWallClockTimestamp(row.date),
     open: row.open,
     high: row.high,
     low: row.low,
     close: row.close,
-    volume: row.volume ?? 0,
+    volume: row.volume,
   }));
+
+  try {
+    const newsRes = await fetch(asset(`/data/fmp/${encodeURIComponent(symbol)}/news.json`), { cache: "no-store" });
+    if (newsRes.ok) {
+      const rawEvents = (await newsRes.json()) as SymbolContextEvent[];
+      if (Array.isArray(rawEvents) && rawEvents.length > 0) {
+        const snapped = snapEventsToCandles(candles, rawEvents);
+        return mergeSymbolContextEventMarkers(candles, snapped);
+      }
+    }
+  } catch {
+    // Non-blocking news enhancement
+  }
+
+  return candles;
 };
 
 interface ChartViewportProps {
@@ -96,9 +135,11 @@ interface ChartViewportProps {
   watermarkVisible: boolean;
   drawingDefaults: DrawingDefaults;
   compareSymbols: string[];
-  chartBackground: { mode: 'solid' | 'gradient'; top: string; bottom: string };
+  chartBackground?: { mode: 'solid' | 'gradient'; top: string; bottom: string };
+  initialIndicators?: PersistedIndicator[];
   onReady: (adapter: ChartAdapter) => void;
   onDrawingEnd?: () => void;
+  onIndicatorRemoved?: (id: string) => void;
 }
 
 const MAX_COMPARE_PANES = 5;
@@ -174,9 +215,12 @@ export function ChartViewport({
   drawingDefaults,
   compareSymbols,
   chartBackground,
+  initialIndicators,
   onReady,
   onDrawingEnd,
+  onIndicatorRemoved,
 }: ChartViewportProps) {
+  const initialIndicatorsRef = useRef(initialIndicators);
   const resolvedThemeMode: ThemeMode = themeMode === "light" ? "light" : "dark";
   const theme = THEMES[resolvedThemeMode];
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -190,7 +234,13 @@ export function ChartViewport({
   const latestOnReadyRef = useRef(onReady);
   const latestOnDrawingEndRef = useRef(onDrawingEnd);
   const latestCompareSymbolsRef = useRef(compareSymbols);
+  const latestOnIndicatorRemovedRef = useRef(onIndicatorRemoved);
   const comparePanesRef = useRef<ComparePanes | null>(null);
+
+  useEffect(() => {
+    initialIndicatorsRef.current = initialIndicators;
+    latestOnIndicatorRemovedRef.current = onIndicatorRemoved;
+  }, [initialIndicators, onIndicatorRemoved]);
 
   useEffect(() => {
     latestSymbolRef.current = symbol;
@@ -203,9 +253,6 @@ export function ChartViewport({
     latestOnDrawingEndRef.current = onDrawingEnd;
   }, [drawingDefaults, onReady, onDrawingEnd]);
 
-  // Compare lines are added to and removed from the live chart. Keeping them in
-  // the chart effect's dependencies destroyed and rebuilt the chart on every
-  // toggle, which reset the zoom and pan.
   useEffect(() => {
     latestCompareSymbolsRef.current = compareSymbols;
     comparePanesRef.current?.sync(compareSymbols);
@@ -219,6 +266,11 @@ export function ChartViewport({
     const chart = new FusionCandlestickChart(containerRef.current, {
       toolbar: {
         visible: false,
+      },
+      // exchangeWallClockTimestamp encodes the exchange clock as UTC, so labels
+      // must render in UTC too; the browser's zone would shift every bar.
+      localization: {
+        timeZone: "UTC",
       },
       layout: {
         background: { color: theme.chartBg },
@@ -245,6 +297,12 @@ export function ChartViewport({
       },
       crosshair: {
         color: theme.crosshair,
+      },
+      panes: {
+        dividerHeight: 1,
+        dividerColor: "#000000",
+        dividerHoverColor: "#000000",
+        resizable: true,
       },
       watermark: {
         visible: watermarkVisible,
@@ -274,8 +332,6 @@ export function ChartViewport({
     const setSmartData = (data: KLineData[]) => {
       chart.setData(data);
       if (data.length < 2) return;
-      // The container can be gone by the time an async load or a replay range
-      // lands (the panel was unmounted or re-laid out); keep the default range then.
       const width = containerRef.current?.clientWidth ?? 0;
       if (width <= 0) return;
       const targetBars = Math.max(56, Math.min(140, Math.floor(width / 9)));
@@ -295,6 +351,21 @@ export function ChartViewport({
     const comparePanes = createComparePanes(chart, period);
     comparePanesRef.current = comparePanes;
     comparePanes.sync(latestCompareSymbolsRef.current);
+    pluginTemplates.forEach((template) => chart.registerIndicatorTemplate(template));
+    // Recreate persisted indicators for this panel if any
+    if (Array.isArray(initialIndicatorsRef.current) && initialIndicatorsRef.current.length > 0) {
+      initialIndicatorsRef.current.forEach((ind) => {
+        try {
+          if (ind.formula) return; // Retired free-form indicators are not executable plugins.
+          chart.createIndicator(ind.name, {
+            id: ind.id, calcParams: ind.calcParams, newPane: ind.newPane ?? true,
+          });
+        } catch (e) {
+          console.warn('Failed to restore indicator', ind, e);
+        }
+      });
+    }
+
     chart.setMagnetMode(magnetMode);
     chart.setPriceScaleMode(priceScaleMode);
     chart.setInvertScale(invertScale);
@@ -386,8 +457,24 @@ export function ChartViewport({
         replayIndex += 1;
         return replayIndex < replayData.length && replayData[replayIndex].timestamp <= replayEndTimestamp;
       },
+      addIndicator: (name, options) => {
+        chart.createIndicator(name, options);
+      },
+      removeIndicator: (paneId, indicatorId) => {
+        chart.removeIndicator(paneId, indicatorId);
+      },
+      getRegisteredIndicators: () => {
+        return chart.getRegisteredIndicatorTemplates().map(t => ({
+          shortName: t.shortName,
+          name: t.name,
+        }));
+      },
+
     };
 
+    const unsubscribeIndicator = chart.subscribe('indicatorRemoved', ({ indicatorId }) => {
+      latestOnIndicatorRemovedRef.current?.(indicatorId);
+    });
     const unsubscribeOverlay = chart.subscribeOverlayChange((params) => {
       if (params.reason === "created") {
         latestOnDrawingEndRef.current?.();
@@ -402,6 +489,7 @@ export function ChartViewport({
       comparePanes.dispose();
       comparePanesRef.current = null;
       unsubscribeOverlay();
+      unsubscribeIndicator();
       chart.destroy();
       chartRef.current = null;
     };
@@ -443,7 +531,7 @@ export function ChartViewport({
   }, [drawingDefaults]);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || !chartBackground) return;
     containerRef.current.style.background = chartBackground.mode === 'gradient'
       ? `linear-gradient(to bottom, ${chartBackground.top}, ${chartBackground.bottom})`
       : chartBackground.top;

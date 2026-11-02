@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { canvasSignature, chartRect, openFresh } from './helpers';
 
 /**
  * Pointer and touch gestures against the real renderer.
@@ -13,52 +14,6 @@ import { expect, test } from '@playwright/test';
  * and a repaint is the observable effect anyway — if the signature moved, the
  * gesture reached the renderer.
  */
-
-/**
- * Cheap checksum of the largest canvas, sampled on a grid.
- *
- * Sampling rather than hashing every pixel keeps this fast and makes it robust
- * to sub-pixel antialiasing noise, while still changing whenever the chart
- * actually redraws different content.
- */
-const canvasSignature = (page: import('@playwright/test').Page) =>
-  page.locator('canvas').evaluateAll(canvases => {
-    const largest = canvases
-      .map(canvas => ({ canvas, area: canvas.getBoundingClientRect().width * canvas.getBoundingClientRect().height }))
-      .sort((a, b) => b.area - a.area)[0]?.canvas as HTMLCanvasElement | undefined;
-    if (!largest) return '';
-    const context = largest.getContext('2d');
-    if (!context) return '';
-    const { data } = context.getImageData(0, 0, largest.width, largest.height);
-    let checksum = 0;
-    for (let index = 0; index < data.length; index += 4 * 97) {
-      checksum = (checksum * 31 + data[index] + data[index + 1] * 3 + data[index + 2] * 7) % 2147483647;
-    }
-    return String(checksum);
-  });
-
-const settle = async (page: import('@playwright/test').Page) => {
-  await page.goto('/playground');
-  await page.evaluate(() => localStorage.clear());
-  await page.reload();
-  await page.waitForSelector('canvas');
-  await page.waitForFunction(() =>
-    [...document.querySelectorAll('canvas')].some(canvas => canvas.width > 0 && canvas.height > 0),
-  );
-  await page.waitForTimeout(600);
-};
-
-const chartRect = (page: import('@playwright/test').Page) =>
-  page.locator('canvas').evaluateAll(canvases => {
-    const largest = canvases
-      .map(canvas => {
-        const box = canvas.getBoundingClientRect();
-        return { left: box.left, top: box.top, width: box.width, height: box.height, area: box.width * box.height };
-      })
-      .sort((a, b) => b.area - a.area)[0];
-    if (!largest) throw new Error('no canvas');
-    return largest;
-  });
 
 /** Two-finger pinch. Playwright's touchscreen is single-touch, so this goes through CDP. */
 async function pinch(
@@ -85,7 +40,8 @@ async function pinch(
 
 test.describe('pointer gestures', () => {
   test('ctrl+wheel zooms the time axis', async ({ page }) => {
-    await settle(page);
+    await openFresh(page);
+    await page.waitForTimeout(600);
     const rect = await chartRect(page);
     const centre = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
     await page.mouse.move(centre.x, centre.y);
@@ -114,7 +70,8 @@ test.describe('pointer gestures', () => {
   });
 
   test('drag pans the time axis', async ({ page }) => {
-    await settle(page);
+    await openFresh(page);
+    await page.waitForTimeout(600);
     const rect = await chartRect(page);
     const centre = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
     const before = await canvasSignature(page);
@@ -128,7 +85,8 @@ test.describe('pointer gestures', () => {
   });
 
   test('a placed overlay can be dragged to a new position', async ({ page }) => {
-    await settle(page);
+    await openFresh(page);
+    await page.waitForTimeout(600);
     // A rectangle: a two-point overlay with a body you can grab anywhere inside.
     await page.locator('[data-sidebar-drawing-tool="rectangle"]').click();
 
@@ -166,7 +124,8 @@ test.describe('pointer gestures', () => {
   test('pinch zooms on a touch device', async ({ page, browserName }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium-mobile', 'touch gestures need the mobile profile');
     void browserName;
-    await settle(page);
+    await openFresh(page);
+    await page.waitForTimeout(600);
     const rect = await chartRect(page);
     const centre = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
     const before = await canvasSignature(page);

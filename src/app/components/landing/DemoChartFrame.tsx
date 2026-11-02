@@ -5,10 +5,9 @@ import { Suspense } from "react";
 
 import { useInView } from "./hooks/useInView";
 import { useReducedMotion } from "./hooks/useReducedMotion";
-import { cn, surface } from "./styles";
+import { cn, DEMO_FRAME_CLASSES, surface } from "./styles";
 import type { LandingThemeTokens } from "./tokens";
 import type { ChartDemoConfig, DemoFrame } from "./DemoChart";
-import { DEMO_FRAME_CLASSES } from "./DemoChart";
 
 const LazyDemoChart = dynamic(() => import("./DemoChart").then((mod) => mod.DemoChart), {
   ssr: false,

@@ -3,7 +3,7 @@
 /**
  * The chart-mounting half of a demo card. This file is the dynamic-import
  * boundary: it's the only place in `landing/` that imports the chart engine
- * itself (`FusionCandlestickChart`, `ChartSyncGroup`), so `next/dynamic`
+ * itself (`FusionCandlestickChart`), so `next/dynamic`
  * loading *this* module — rather than gating a `useEffect` inside an
  * eagerly-imported component — is what actually keeps the engine's code out
  * of the page's initial JS. `DemoChartFrame` only imports this module's
@@ -13,8 +13,7 @@
 import { useEffect, useRef } from "react";
 
 import { FusionCandlestickChart } from "fscandle";
-import { ChartSyncGroup } from "fscandle";
-import type { KLineData } from "fscandle";
+import type { ChartSyncGroup, KLineData } from "fscandle";
 
 import {
   buildCompareData,
@@ -22,7 +21,7 @@ import {
   type OverlayInput,
   type Period,
 } from "./chart-demo-data";
-import { cn } from "./styles";
+import { cn, DEMO_FRAME_CLASSES } from "./styles";
 import type { LandingThemeTokens } from "./tokens";
 
 export type ChartStyle = "candle" | "hollow" | "line" | "step" | "baseline" | "area" | "ha" | "bar";
@@ -141,13 +140,6 @@ function tickBar(final: KLineData, tick: number, totalTicks: number): KLineData 
 
 const AXIS_METRICS = { top: 22, bottom: 22, right: 85, left: 55 } as const;
 
-export const DEMO_FRAME_CLASSES: Record<DemoFrame, string> = {
-  compact: "h-[208px] md:h-[220px]",
-  // `h-full` follows the container the section gives it; the floor only keeps a
-  // chart from collapsing before it has measured.
-  feature: "h-full min-h-[220px] md:min-h-[240px]",
-};
-
 const DEMO_CHROME: Record<DemoChrome, { cropTop: number; cropBottom: number; cropLeft: number; cropRight: number }> = {
   full: { cropTop: AXIS_METRICS.top, cropBottom: AXIS_METRICS.bottom, cropLeft: 0, cropRight: 0 },
   // Preserve the bottom time ruler for demos where the date context matters.
@@ -207,6 +199,23 @@ function createSegmentedRenderer(theme: LandingThemeTokens) {
       phases.length > 0
         ? phases
         : [{ fromIndex: 0, toIndex: data.length - 1, style: "candle" as ChartStyle }];
+
+    const strokeRange = (from: number, to: number, color: string, lineWidth: number, stepped = false) => {
+      ctx.beginPath();
+      for (let i = from; i <= to; i++) {
+        const x = indexToX(i);
+        const y = priceToY(data[i].close);
+        if (i === from) {
+          ctx.moveTo(x, y);
+        } else {
+          if (stepped) ctx.lineTo(x, priceToY(data[i - 1].close));
+          ctx.lineTo(x, y);
+        }
+      }
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lineWidth;
+      ctx.stroke();
+    };
 
     activePhases.forEach((phase, phaseIdx) => {
       const from = Math.max(0, Math.min(data.length - 1, phase.fromIndex));
@@ -371,44 +380,12 @@ function createSegmentedRenderer(theme: LandingThemeTokens) {
         ctx.fillStyle = grad;
         ctx.fill();
 
-        ctx.beginPath();
-        for (let i = from; i <= to; i++) {
-          const x = indexToX(i);
-          const y = priceToY(data[i].close);
-          if (i === from) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.strokeStyle = "#a855f7";
-        ctx.lineWidth = 2.2;
-        ctx.stroke();
+        strokeRange(from, to, "#a855f7", 2.2);
       } else if (style === "step") {
-        ctx.beginPath();
-        for (let i = from; i <= to; i++) {
-          const x = indexToX(i);
-          const y = priceToY(data[i].close);
-          if (i === from) {
-            ctx.moveTo(x, y);
-          } else {
-            const prevY = priceToY(data[i - 1].close);
-            ctx.lineTo(x, prevY);
-            ctx.lineTo(x, y);
-          }
-        }
-        ctx.strokeStyle = "#f59e0b";
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        strokeRange(from, to, "#f59e0b", 2, true);
       } else {
         // Line
-        ctx.beginPath();
-        for (let i = from; i <= to; i++) {
-          const x = indexToX(i);
-          const y = priceToY(data[i].close);
-          if (i === from) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.strokeStyle = lineColor;
-        ctx.lineWidth = 2.2;
-        ctx.stroke();
+        strokeRange(from, to, lineColor, 2.2);
       }
 
       // Draw subtle phase boundary line + label
@@ -456,29 +433,18 @@ function applyMainSeriesStyle(
 }
 
 function applyIndicators(chart: FusionCandlestickChart, indicators: IndicatorConfig[]) {
+  const dedicated: Partial<Record<IndicatorKind, (params?: number[]) => void>> = {
+    ema: params => chart.addEMASeries(params?.[0] ?? 20),
+    boll: params => chart.addBOLLSeries(params?.[0] ?? 20, params?.[1] ?? 2),
+    rsi: params => chart.addRSISeries(params?.[0] ?? 14),
+    macd: params => chart.addMACDSeries({ calcParams: params }),
+    kdj: () => chart.addKDJSeries(),
+    wr: () => chart.addWRSeries(),
+  };
   indicators.forEach((indicator) => {
-    if (indicator.kind === "ema") {
-      chart.addEMASeries(indicator.params?.[0] ?? 20);
-      return;
-    }
-    if (indicator.kind === "boll") {
-      chart.addBOLLSeries(indicator.params?.[0] ?? 20, indicator.params?.[1] ?? 2);
-      return;
-    }
-    if (indicator.kind === "rsi") {
-      chart.addRSISeries(indicator.params?.[0] ?? 14);
-      return;
-    }
-    if (indicator.kind === "macd") {
-      chart.addMACDSeries({ calcParams: indicator.params });
-      return;
-    }
-    if (indicator.kind === "kdj") {
-      chart.addKDJSeries();
-      return;
-    }
-    if (indicator.kind === "wr") {
-      chart.addWRSeries();
+    const add = dedicated[indicator.kind];
+    if (add) {
+      add(indicator.params);
       return;
     }
 
