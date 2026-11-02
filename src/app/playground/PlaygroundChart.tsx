@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef } from "react";
 
-import { FusionCandlestickChart, type DrawingLayer, type PriceScaleMode, type KLineData } from "fscandle";
+import { FusionCandlestickChart, mergeSymbolContextEventMarkers, type DrawingLayer, type PriceScaleMode, type KLineData, type SymbolContextEvent } from "fscandle";
 import { pluginTemplates } from "./indicatorPlugins";
 import { THEMES, type ThemeMode } from "../ui/theme";
 import { asset } from "../lib/asset";
@@ -70,6 +70,27 @@ const exchangeWallClockTimestamp = (value: string): number => {
   return Date.parse(`${value.replace(" ", "T")}Z`);
 };
 
+const snapEventsToCandles = (candles: KLineData[], events: SymbolContextEvent[]): SymbolContextEvent[] => {
+  if (candles.length === 0 || events.length === 0) return events;
+  const candleTimes = candles.map((c) => c.timestamp);
+  const candleInterval = candles.length > 1 ? Math.abs(candles[1].timestamp - candles[0].timestamp) : 86400000;
+  return events.map((ev) => {
+    let bestTs = ev.timestamp;
+    let minDiff = Infinity;
+    for (let i = 0; i < candleTimes.length; i++) {
+      const diff = Math.abs(candleTimes[i] - ev.timestamp);
+      if (diff < minDiff) {
+        minDiff = diff;
+        bestTs = candleTimes[i];
+      }
+    }
+    if (minDiff <= Math.max(candleInterval * 1.5, 86400000 * 2)) {
+      return { ...ev, timestamp: bestTs };
+    }
+    return ev;
+  });
+};
+
 const loadHistoricalData = async (symbol: string, period: Period): Promise<KLineData[]> => {
   const response = await fetch(
     asset(`/data/fmp/${encodeURIComponent(symbol)}/${PERIOD_FILES[period]}.json`),
@@ -77,7 +98,7 @@ const loadHistoricalData = async (symbol: string, period: Period): Promise<KLine
   );
   if (!response.ok) return [];
   const rows = await response.json() as HistoricalFileRow[];
-  return rows.map((row) => ({
+  const candles: KLineData[] = rows.map((row) => ({
     timestamp: exchangeWallClockTimestamp(row.date),
     open: row.open,
     high: row.high,
@@ -85,6 +106,21 @@ const loadHistoricalData = async (symbol: string, period: Period): Promise<KLine
     close: row.close,
     volume: row.volume,
   }));
+
+  try {
+    const newsRes = await fetch(asset(`/data/fmp/${encodeURIComponent(symbol)}/news.json`), { cache: "no-store" });
+    if (newsRes.ok) {
+      const rawEvents = (await newsRes.json()) as SymbolContextEvent[];
+      if (Array.isArray(rawEvents) && rawEvents.length > 0) {
+        const snapped = snapEventsToCandles(candles, rawEvents);
+        return mergeSymbolContextEventMarkers(candles, snapped);
+      }
+    }
+  } catch {
+    // Non-blocking news enhancement
+  }
+
+  return candles;
 };
 
 interface ChartViewportProps {

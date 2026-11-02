@@ -32,13 +32,13 @@ const seededRng = (n: number) => {
 const symbolSeed = (symbol: string) => symbol.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
 
 const basePriceBySymbol = (symbol: string) => {
-  if (symbol.includes("BTC")) return 67450;
+  if (symbol.includes("BTC")) return 87498;
   if (symbol.includes("ETH")) return 3480;
-  if (symbol.includes("SOL")) return 158;
-  if (symbol.includes("NVDA")) return 124.5;
-  if (symbol.includes("AAPL")) return 224.2;
-  if (symbol.includes("QQQ")) return 482.6;
-  if (symbol.includes("SPY")) return 562.4;
+  if (symbol.includes("SOL")) return 188;
+  if (symbol.includes("NVDA")) return 186.5;
+  if (symbol.includes("AAPL")) return 271.9;
+  if (symbol.includes("QQQ")) return 614.3;
+  if (symbol.includes("SPY")) return 681.9;
   return 500;
 };
 
