@@ -1,4 +1,10 @@
-import type { IndicatorPlugin, IndicatorTemplate } from 'fscandle';
+import type { IndicatorTemplate } from 'fscandle';
+
+export interface IndicatorPlugin {
+  name: string;
+  version: string;
+  install: (context: { registerTemplate: (template: IndicatorTemplate) => void }) => void;
+}
 
 /** Compiled templates only: no evaluation of user-entered formula strings. */
 export const pluginTemplates: IndicatorTemplate[] = [
