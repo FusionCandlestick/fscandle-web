@@ -423,8 +423,12 @@ export default function PlaygroundPage() {
     setDrawingLayers(first.getDrawingLayers());
     setActiveDrawingLayerId(first.getActiveDrawingLayerId());
   };
+  // The layer panel shows the active panel's layers, so layer actions apply to
+  // that panel. Layer ids are per chart: applying them to every visible panel
+  // acted on layers the user was not looking at.
   const applyLayerMutation = (fn: (adapter: ChartAdapter) => void) => {
-    applyToVisible(fn);
+    const adapter = primaryAdapter();
+    if (adapter) fn(adapter);
     syncDrawingLayers();
   };
   const closeTransientMenus = () => {
@@ -1303,11 +1307,12 @@ export default function PlaygroundPage() {
                 onReady={(adapter) => {
                   if (layout === "single" && index === 0) {
                     mainAdapter.current = adapter;
-                    setDrawingLayers(adapter.getDrawingLayers());
-                    setActiveDrawingLayerId(adapter.getActiveDrawingLayerId());
                   }
                   assignPanelAdapter(index, adapter);
-                  if (index === 0 && layout !== "single") {
+                  // Panels rebuild their chart on style or period changes. Only the
+                  // active panel's layers belong in the layer panel; panel 1 used
+                  // to overwrite them whatever panel was active.
+                  if (index === activePanelIndex) {
                     setDrawingLayers(adapter.getDrawingLayers());
                     setActiveDrawingLayerId(adapter.getActiveDrawingLayerId());
                   }

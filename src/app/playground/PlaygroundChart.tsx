@@ -101,6 +101,66 @@ interface ChartViewportProps {
   onDrawingEnd?: () => void;
 }
 
+const MAX_COMPARE_PANES = 5;
+const COMPARE_COLORS = ["#38bdf8", "#f59e0b", "#a78bfa", "#10b981", "#fb7185"];
+
+interface ComparePanes {
+  /** Make the chart show exactly these compare symbols (the first five). */
+  sync(symbols: readonly string[]): void;
+  /** Stop adding panes: loads still in flight are ignored. */
+  dispose(): void;
+}
+
+/**
+ * Compare lines for one chart instance, reconciled by symbol.
+ *
+ * A pane keeps its slot (left/right side and colour) while its position in the
+ * list is unchanged; a pane whose position changed is recreated in its new
+ * slot. History loads are asynchronous, so a load that resolves after its symbol
+ * was removed, or after the chart was rebuilt, is dropped.
+ */
+function createComparePanes(chart: FusionCandlestickChart, period: Period): ComparePanes {
+  const shown = new Map<string, number>();
+  const pending = new Map<string, number>();
+  let wanted = new Map<string, number>();
+  let disposed = false;
+
+  return {
+    sync(symbols) {
+      const list = symbols.slice(0, MAX_COMPARE_PANES);
+      wanted = new Map(list.map((symbol, index) => [symbol.toLowerCase(), index]));
+
+      for (const [id, slot] of [...shown]) {
+        if (wanted.get(id) !== slot) {
+          chart.removeStackedPricePane(id);
+          shown.delete(id);
+        }
+      }
+
+      list.forEach((symbol, index) => {
+        const id = symbol.toLowerCase();
+        if (shown.has(id) || pending.get(id) === index) return;
+        pending.set(id, index);
+        void loadHistoricalData(symbol, period).then(data => {
+          if (pending.get(id) === index) pending.delete(id);
+          if (disposed || data.length === 0 || wanted.get(id) !== index || shown.has(id)) return;
+          chart.addStackedPricePane({
+            id,
+            data,
+            side: index % 2 === 0 ? "left" : "right",
+            style: "line",
+            options: { color: COMPARE_COLORS[index % COMPARE_COLORS.length], lineWidth: 2 },
+          });
+          shown.set(id, index);
+        });
+      });
+    },
+    dispose() {
+      disposed = true;
+    },
+  };
+}
+
 export function ChartViewport({
   symbol,
   period,
@@ -129,6 +189,8 @@ export function ChartViewport({
   const latestDrawingDefaultsRef = useRef(drawingDefaults);
   const latestOnReadyRef = useRef(onReady);
   const latestOnDrawingEndRef = useRef(onDrawingEnd);
+  const latestCompareSymbolsRef = useRef(compareSymbols);
+  const comparePanesRef = useRef<ComparePanes | null>(null);
 
   useEffect(() => {
     latestSymbolRef.current = symbol;
@@ -140,6 +202,14 @@ export function ChartViewport({
     latestOnReadyRef.current = onReady;
     latestOnDrawingEndRef.current = onDrawingEnd;
   }, [drawingDefaults, onReady, onDrawingEnd]);
+
+  // Compare lines are added to and removed from the live chart. Keeping them in
+  // the chart effect's dependencies destroyed and rebuilt the chart on every
+  // toggle, which reset the zoom and pan.
+  useEffect(() => {
+    latestCompareSymbolsRef.current = compareSymbols;
+    comparePanesRef.current?.sync(compareSymbols);
+  }, [compareSymbols]);
 
   useEffect(() => {
     if (!containerRef.current) {
@@ -204,7 +274,11 @@ export function ChartViewport({
     const setSmartData = (data: KLineData[]) => {
       chart.setData(data);
       if (data.length < 2) return;
-      const targetBars = Math.max(56, Math.min(140, Math.floor(containerRef.current!.clientWidth / 9)));
+      // The container can be gone by the time an async load or a replay range
+      // lands (the panel was unmounted or re-laid out); keep the default range then.
+      const width = containerRef.current?.clientWidth ?? 0;
+      if (width <= 0) return;
+      const targetBars = Math.max(56, Math.min(140, Math.floor(width / 9)));
       chart.setVisibleLogicalRange({ from: Math.max(0, data.length - targetBars), to: data.length - 1 });
     };
     let disposed = false;
@@ -218,21 +292,9 @@ export function ChartViewport({
       setSmartData(data);
     };
     void loadData(symbol, period);
-    compareSymbols.slice(0, 5).forEach((compareSymbol, index) => {
-      void loadHistoricalData(compareSymbol, period).then((data) => {
-        if (disposed || data.length === 0) return;
-        chart.addStackedPricePane({
-          id: compareSymbol.toLowerCase(),
-          data,
-          side: index % 2 === 0 ? "left" : "right",
-          style: "line",
-          options: {
-            color: ["#38bdf8", "#f59e0b", "#a78bfa", "#10b981", "#fb7185"][index % 5],
-            lineWidth: 2,
-          },
-        });
-      });
-    });
+    const comparePanes = createComparePanes(chart, period);
+    comparePanesRef.current = comparePanes;
+    comparePanes.sync(latestCompareSymbolsRef.current);
     chart.setMagnetMode(magnetMode);
     chart.setPriceScaleMode(priceScaleMode);
     chart.setInvertScale(invertScale);
@@ -337,13 +399,14 @@ export function ChartViewport({
 
     return () => {
       disposed = true;
+      comparePanes.dispose();
+      comparePanesRef.current = null;
       unsubscribeOverlay();
       chart.destroy();
       chartRef.current = null;
     };
   }, [
     chartStyle,
-    compareSymbols,
     invertScale,
     magnetMode,
     period,

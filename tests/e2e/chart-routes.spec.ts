@@ -151,6 +151,65 @@ test.describe('chart routes', () => {
     await expect(page.getByTitle('Remove comparison for NVDA')).toBeHidden();
   });
 
+  test('toggling a compare line updates the chart without rebuilding it', async ({ page }) => {
+    await page.goto('/playground');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await waitForCanvasSurface(page);
+
+    // A rebuild replaces every canvas, which also resets zoom and pan. The
+    // original canvas staying attached shows the chart was updated in place.
+    const canvas = await page.getByTestId('chart-panel').first().locator('canvas').first().elementHandle();
+    const comparePane = page.locator('.fscandle-legend-series-remove[data-id="nvda"]');
+
+    await page.getByPlaceholder('Symbol', { exact: true }).click();
+    await page.getByTestId('symbol-search-result-NVDA').getByTitle(/Add NVDA as compare line/).click();
+    await page.keyboard.press('Escape');
+    await expect(comparePane).toHaveCount(1);
+    expect(await canvas!.evaluate(element => element.isConnected)).toBe(true);
+
+    await page.getByTitle('Remove comparison for NVDA').click();
+    await expect(comparePane).toHaveCount(0);
+    expect(await canvas!.evaluate(element => element.isConnected)).toBe(true);
+  });
+
+  test('drawing layers follow the active panel in a split layout', async ({ page }) => {
+    await page.goto('/playground');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await waitForCanvasSurface(page);
+
+    await page.getByTitle('Chart Settings').click();
+    await page.locator('[data-layout-mode="split-horizontal"]').click();
+    await page.keyboard.press('Escape');
+    await expect.poll(async () => (await getPanelRects(page)).length).toBe(2);
+
+    const layerButtons = () => page.getByTestId('settings-menu').locator('[data-testid^="drawing-layer-"]');
+    // Panels activate on a pointer press anywhere inside them, as in the
+    // watchlist test above.
+    const activate = async (panel: number) => {
+      await page.locator('[data-testid="chart-panel"]').nth(panel - 1).click();
+      await expect(page.locator('[data-testid="chart-panel"]').nth(panel - 1)).toHaveAttribute('data-active-panel', 'true');
+    };
+    const layersOn = async (panel: number) => {
+      await activate(panel);
+      await page.getByTitle('Chart Settings').click();
+      const count = await layerButtons().count();
+      await page.keyboard.press('Escape');
+      return count;
+    };
+
+    // A layer created while panel 2 is active belongs to panel 2 only.
+    await activate(2);
+    await page.getByTitle('Chart Settings').click();
+    await page.getByTestId('create-drawing-layer').click();
+    await expect(layerButtons()).toHaveCount(2);
+    await page.keyboard.press('Escape');
+
+    expect(await layersOn(1)).toBe(1);
+    expect(await layersOn(2)).toBe(2);
+  });
+
   test('playground custom popovers dismiss when clicking elsewhere', async ({ page }) => {
     await page.goto('/playground');
     await page.evaluate(() => localStorage.clear());
