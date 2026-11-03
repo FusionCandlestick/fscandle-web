@@ -6,6 +6,7 @@ import { Wordmark } from "./Wordmark";
 import { cn, surface, text } from "./styles";
 
 const REPO = "https://github.com/FusionCandlestick/fscandle";
+const SITE_REPO = "https://github.com/FusionCandlestick/fscandle-web";
 
 export function Footer() {
   return (
@@ -37,10 +38,16 @@ export function Footer() {
             <h2 className={cn("text-[12px] font-semibold", text.main)}>Contact & Community</h2>
             <div className="mt-4 flex flex-col items-start gap-3 text-[12px]">
               <a href={REPO} target="_blank" rel="noopener noreferrer" className={cn("inline-flex items-center gap-2 outline-none transition-colors", text.muted, "hover:text-[color:var(--lp-text-main)] focus-visible:text-[color:var(--lp-text-main)]")}>
-                <GitHubIcon /> GitHub <ArrowUpRight size={13} />
+                <GitHubIcon /> Engine on GitHub <ArrowUpRight size={13} />
+              </a>
+              <a href={SITE_REPO} target="_blank" rel="noopener noreferrer" className={cn("inline-flex items-center gap-2 outline-none transition-colors", text.muted, "hover:text-[color:var(--lp-text-main)] focus-visible:text-[color:var(--lp-text-main)]")}>
+                <GitHubIcon /> Website source <ArrowUpRight size={13} />
               </a>
               <a href={`${REPO}/issues`} target="_blank" rel="noopener noreferrer" className={cn("inline-flex items-center gap-2 outline-none transition-colors", text.muted, "hover:text-[color:var(--lp-text-main)] focus-visible:text-[color:var(--lp-text-main)]")}>
-                <MessageSquare size={16} /> Issues & Feedback
+                <MessageSquare size={16} /> Engine issues & feedback
+              </a>
+              <a href={`${SITE_REPO}/issues`} target="_blank" rel="noopener noreferrer" className={cn("inline-flex items-center gap-2 outline-none transition-colors", text.muted, "hover:text-[color:var(--lp-text-main)] focus-visible:text-[color:var(--lp-text-main)]")}>
+                <MessageSquare size={16} /> Website issues
               </a>
               <a href={`${REPO}/discussions`} target="_blank" rel="noopener noreferrer" className={cn("inline-flex items-center gap-2 outline-none transition-colors", text.muted, "hover:text-[color:var(--lp-text-main)] focus-visible:text-[color:var(--lp-text-main)]")}>
                 <Mail size={16} /> Community contact
