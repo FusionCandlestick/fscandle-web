@@ -19,6 +19,12 @@ import { waitForCanvas } from './helpers';
  * deterministic rather than "whichever frame the 3.2s auto-morph landed on".
  */
 
+/**
+ * The landing demo series is built from the current time, so a baseline taken
+ * on one day does not match the next. Both shots pin the clock.
+ */
+const FIXED_NOW = new Date('2026-01-15T12:00:00Z');
+
 const settleChart = async (page: import('@playwright/test').Page) => {
   await waitForCanvas(page);
   // Park the pointer off-canvas so a hover crosshair cannot bleed into the shot.
@@ -28,6 +34,7 @@ const settleChart = async (page: import('@playwright/test').Page) => {
 
 test.describe('visual regression', () => {
   test('home route chart surface matches its baseline', async ({ page }) => {
+    await page.clock.setFixedTime(FIXED_NOW);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
@@ -37,6 +44,7 @@ test.describe('visual regression', () => {
   });
 
   test('playground workspace shell matches its baseline', async ({ page }) => {
+    await page.clock.setFixedTime(FIXED_NOW);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/playground');
     await page.evaluate(() => localStorage.clear());
