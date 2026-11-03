@@ -5,7 +5,7 @@
 > surface rather than wrapping an existing library; KLineCharts and Lightweight
 > Charts are used only as reference baselines, not dependencies.
 
-This site (fusioncandlestick.dev) is the marketing page and interactive
+This site (https://fusioncandlestick.github.io/fscandle-web/) is the marketing page and interactive
 playground. The engine is a separate repository and npm package, `fscandle`.
 
 Status: v0.1.2. The public API is 0.x and may change between minor versions.

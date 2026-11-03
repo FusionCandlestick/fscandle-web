@@ -1,3 +1,4 @@
+import { SITE_URL } from "./lib/site";
 import type { Metadata, Viewport } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
@@ -18,7 +19,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://fusioncandlestick.dev"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "FusionCandlestick — Canvas K-Line Chart Engine & Financial Workspace",
     template: "%s | FusionCandlestick",
@@ -55,7 +56,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://fusioncandlestick.dev",
+    url: SITE_URL,
     siteName: "FusionCandlestick",
     title: "FusionCandlestick — Canvas K-Line Engine & Terminal Shell",
     description:
@@ -68,7 +69,7 @@ export const metadata: Metadata = {
       "Non-commercial source-available HTML5 Canvas K-line engine with 8 series renderers, 16 indicators, and a multi-panel workspace shell.",
   },
   alternates: {
-    canonical: "https://fusioncandlestick.dev",
+    canonical: SITE_URL,
   },
   category: "technology",
 };
@@ -78,26 +79,26 @@ const jsonLdGraph = {
   "@graph": [
     {
       "@type": "WebSite",
-      "@id": "https://fusioncandlestick.dev/#website",
-      url: "https://fusioncandlestick.dev",
+      "@id": `${SITE_URL}/#website`,
+      url: SITE_URL,
       name: "FusionCandlestick",
       description: "High-Performance Canvas K-Line Engine & Financial Workspace",
       publisher: {
         "@type": "Organization",
         name: "FusionFinance",
-        url: "https://fusioncandlestick.dev",
+        url: SITE_URL,
       },
     },
     {
       "@type": "SoftwareApplication",
-      "@id": "https://fusioncandlestick.dev/#software",
+      "@id": `${SITE_URL}/#software`,
       name: "FusionCandlestick",
       operatingSystem: "Any (modern web browser)",
       applicationCategory: "DeveloperApplication",
       applicationSubCategory: "Financial charting library",
       softwareVersion: "0.1.2",
       license: "https://github.com/FusionCandlestick/fscandle/blob/main/LICENSE",
-      url: "https://fusioncandlestick.dev",
+      url: SITE_URL,
       sameAs: ["https://github.com/FusionCandlestick/fscandle"],
       description:
         "Non-commercial source-available HTML5 Canvas K-line chart engine, terminal shell, and synchronized playground workspace for financial and quantitative applications.",
@@ -117,7 +118,7 @@ const jsonLdGraph = {
     },
     {
       "@type": "SoftwareSourceCode",
-      "@id": "https://fusioncandlestick.dev/#source",
+      "@id": `${SITE_URL}/#source`,
       name: "FusionCandlestick",
       codeRepository: "https://github.com/FusionCandlestick/fscandle",
       programmingLanguage: ["TypeScript", "CSS"],

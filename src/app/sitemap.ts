@@ -1,7 +1,8 @@
+import { SITE_URL } from "./lib/site";
 import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://fusioncandlestick.dev";
+  const baseUrl = SITE_URL;
   const lastModified = new Date();
 
   return [

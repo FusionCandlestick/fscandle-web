@@ -1,5 +1,6 @@
 "use client";
 
+import { SITE_URL } from "../../../lib/site";
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Reveal } from "../Reveal";
@@ -28,7 +29,7 @@ export function FAQSection({ className }: { className?: string }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "FAQPage",
-          "@id": "https://fusioncandlestick.dev/#faq",
+          "@id": `${SITE_URL}/#faq`,
           mainEntity: FAQ_ITEMS.map((item) => ({
             "@type": "Question",
             name: item.question,
