@@ -1,0 +1,53 @@
+name: Update Linux baselines
+
+# Manual only. Regenerates the screenshot baselines on the same runner image the
+# E2E workflow uses, and pushes them to a separate branch for review. It never
+# touches main or the working branch.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Capture baselines
+        run: npx playwright test tests/e2e/visual-regression.spec.ts --update-snapshots=all
+
+      - name: Upload captured screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-baselines
+          path: |
+            tests/e2e/__screenshots__
+            test-results
+          retention-days: 7
+
+      - name: Push baselines to a review branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B ci/linux-baselines
+          git add tests/e2e/__screenshots__
+          if git diff --cached --quiet; then
+            echo "Baselines are unchanged."
+            exit 0
+          fi
+          git commit -m "test(e2e): Linux baselines captured on the CI runner"
+          git push --force origin HEAD:refs/heads/ci/linux-baselines
