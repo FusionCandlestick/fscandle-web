@@ -95,7 +95,7 @@ const jsonLdGraph = {
       operatingSystem: "Any (modern web browser)",
       applicationCategory: "DeveloperApplication",
       applicationSubCategory: "Financial charting library",
-      softwareVersion: "0.1.0",
+      softwareVersion: "0.1.2",
       license: "https://github.com/FusionCandlestick/fscandle/blob/main/LICENSE",
       url: "https://fusioncandlestick.dev",
       sameAs: ["https://github.com/FusionCandlestick/fscandle"],

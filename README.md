@@ -16,17 +16,16 @@ npm ci
 npm run dev
 ```
 
-The engine is pinned to `vendor/fscandle-0.1.2.tgz`. This local candidate
-contains the indicator plugin APIs required by the site; the registry package
-with the same version does not. The lockfile verifies tarball integrity; no sibling
-checkout is needed to install. Local source-directory dependencies and links
-remain forbidden.
+The engine is pinned to `vendor/fscandle-0.1.2.tgz`. Its contents are identical to
+the npm package `fscandle@0.1.2`, and the lockfile verifies the tarball's integrity.
+No sibling checkout is needed to install. Local source-directory dependencies and
+links remain forbidden.
 
-For an engine update, build and test the engine in its own checkout, generate
-its tarball with `npm pack --ignore-scripts`, and replace the vendored artifact.
-Regenerate `package-lock.json` with `npm install --package-lock-only`, then verify a clean `npm ci`, unit tests and static build. Keep the
-previous release artifact for rollback; version text alone does not identify
-these local candidates.
+For an engine update, build and test the engine in its own checkout, generate its
+tarball with `npm pack --ignore-scripts`, and replace the vendored artifact.
+Regenerate `package-lock.json` with `npm install --package-lock-only`, then verify
+a clean `npm ci`, unit tests and static build. Keep the previous release artifact
+for rollback.
 
 The indicator library uses compiled templates in
 `src/app/playground/indicatorPlugins.ts`, installed through `useIndicatorPlugin`.
@@ -58,14 +57,31 @@ Drop `NEXT_PUBLIC_BASE_PATH` once the site moves to a custom domain.
 
 ## Data
 
-`public/data/fmp/` holds bundled demonstration OHLC JSON. Its per-symbol manifests
-declare Yahoo daily cache inputs and intraday bars synthesised from daily OHLC;
-the directory name does not establish an FMP source. `/playground` fetches bars
-directly and does not load those manifests. There is no data API.
+Bundled demonstration data lives in `public/data/fmp/<SYMBOL>/`. Each symbol's
+`manifest.json` names Financial Modeling Prep as its source and lists no synthetic
+series. The playground loads the bar files directly and does not read the manifests.
+There is no data API. The files cover:
 
-These files do not establish currency, adjustment, historical identity or when
-a completed weekly bar became available. Replay is a chart demonstration, not
-a point-in-time research/account receipt; synthetic intraday bars are not real trades.
+- Daily bars for calendar 2025: BTC has 365 bars; NVDA, QQQ and SPY have 250
+  trading days each.
+- Intraday bars over recent windows only, not the full year. 1-minute bars cover
+  the last three days, 1-hour bars start in early October 2025, and 4-hour bars
+  start in early July 2025.
+
+The repository has no script that fetches these files, so their origin cannot be
+checked here. An earlier version of this section said intraday bars were
+synthesised from daily OHLC. The current manifests no longer say that, and the
+bundled data does not settle the question. For the three days where BTC has both
+1-minute and daily bars, the aggregated 1-minute high and low matched the daily
+bar on only one day, so the two sets do not reconcile exactly.
+
+Each item in `news.json` names a source site and URL. The repository does not
+record when or how the items were retrieved, so they are not verified as reproduced
+article text or as a point-in-time record.
+
+Replay plays these bars back for demonstration. It is not a point-in-time research
+or account receipt. Nothing in the bundled files establishes currency, adjustment,
+or when a completed bar became available.
 
 ## License
 

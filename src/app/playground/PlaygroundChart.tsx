@@ -65,7 +65,7 @@ interface HistoricalFileRow {
 
 // Bundled offset-free dates are encoded as UTC for consistent chart labels.
 // This display convention does not establish a provider timezone or the real
-// UTC instant; the manifests also identify synthetic intraday inputs.
+// UTC instant. The bundled files are demonstration data with unverified provenance.
 const exchangeWallClockTimestamp = (value: string): number => {
   return Date.parse(`${value.replace(" ", "T")}Z`);
 };
