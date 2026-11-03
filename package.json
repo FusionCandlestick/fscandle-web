@@ -1,6 +1,6 @@
 {
   "name": "fscandle-web",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "Marketing site and interactive playground for FusionCandlestick (fscandle).",
   "license": "SEE LICENSE IN https://github.com/FusionCandlestick/fscandle/blob/main/LICENSE",
