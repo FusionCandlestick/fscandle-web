@@ -6,6 +6,7 @@ import { DemoChartFrame } from "../DemoChartFrame";
 import { ShowcaseFrame, ShowcaseMobileCode, ShowcaseViewToggle } from "../ShowcaseFrame";
 import { useReducedMotion } from "../hooks/useReducedMotion";
 import { cn, text, toggleButton } from "../styles";
+import { replaySeedCount } from "../DemoChart";
 import type { ChartDemoConfig, ChartStyle, SegmentedPhase } from "../DemoChart";
 import type { LandingThemeTokens } from "../tokens";
 
@@ -19,6 +20,8 @@ const ALL_STYLES: Array<{ id: ChartStyle; label: string; desc: string }> = [
   { id: "line", label: "Line", desc: "Close price as a single connected line" },
   { id: "step", label: "Step Line", desc: "Discrete rate / staircase changes" },
 ];
+
+const DATA_COUNT = 160;
 
 export function SeriesShowcase({ theme, className }: { theme: LandingThemeTokens; className?: string }) {
   const [cycleIndex, setCycleIndex] = useState(3); // Start with 'area' on live phase
@@ -37,20 +40,27 @@ export function SeriesShowcase({ theme, className }: { theme: LandingThemeTokens
 
   const activeInfo = ALL_STYLES[cycleIndex % ALL_STYLES.length];
   const selectedStyle = activeInfo.id;
-  const phases = useMemo<SegmentedPhase[]>(() => [
-    { fromIndex: 0, toIndex: 34, style: "candle", label: "Candle" },
-    { fromIndex: 35, toIndex: 69, style: "ha", label: "Heikin-Ashi" },
-    { fromIndex: 70, toIndex: 104, style: "baseline", label: "Baseline" },
-    { fromIndex: 105, toIndex: 134, style: "bar", label: "OHLC Bar" },
-    { fromIndex: 135, toIndex: 9999, style: activeInfo.id, label: `Live: ${activeInfo.label}` },
-  ], [activeInfo]);
+  // The replay shows the first `seed` bars, then streams the rest. The live
+  // segment starts at the seed, so every bar the replay streams takes the active
+  // style and the chart matches the highlighted pill.
+  const phases = useMemo<SegmentedPhase[]>(() => {
+    const seed = replaySeedCount(DATA_COUNT);
+    const quarter = Math.floor(seed / 4);
+    return [
+      { fromIndex: 0, toIndex: quarter - 1, style: "candle", label: "Candle" },
+      { fromIndex: quarter, toIndex: quarter * 2 - 1, style: "ha", label: "Heikin-Ashi" },
+      { fromIndex: quarter * 2, toIndex: quarter * 3 - 1, style: "baseline", label: "Baseline" },
+      { fromIndex: quarter * 3, toIndex: seed - 1, style: "bar", label: "OHLC Bar" },
+      { fromIndex: seed, toIndex: 9999, style: activeInfo.id, label: `Live: ${activeInfo.label}` },
+    ];
+  }, [activeInfo]);
 
   const config: ChartDemoConfig = {
     symbol: "BTCUSDT",
     chartStyle: selectedStyle,
     segmentedPhases: phases,
     period: "1d",
-    dataCount: 160,
+    dataCount: DATA_COUNT,
     rightMargin: 0.08,
     frame: "feature",
     chrome: "clean",

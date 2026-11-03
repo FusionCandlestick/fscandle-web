@@ -122,6 +122,11 @@ const REPLAY_TICK_MS = 110;
 const REPLAY_TICKS_PER_BAR = 3;
 const REPLAY_LOOP_PAUSE_MS = 1600;
 
+/** How many bars are on screen before a replay starts streaming the rest. */
+export function replaySeedCount(count: number): number {
+  return Math.max(4, Math.round(count * REPLAY_SEED_RATIO));
+}
+
 /** One in-progress bar, ticking toward its final OHLC over a few steps —
  * this is what makes the replay read as \"live\" rather than a fast-forward. */
 function tickBar(final: KLineData, tick: number, totalTicks: number): KLineData {
@@ -583,7 +588,7 @@ export function DemoChart({ config, theme, syncGroup, reducedMotion = false }: D
     const seedCount = shouldReplay
       ? isOverlay
         ? 12
-        : Math.max(4, Math.round(baseData.length * REPLAY_SEED_RATIO))
+        : replaySeedCount(baseData.length)
       : baseData.length;
 
     const overlaySeriesList: Array<{ series: ReturnType<typeof chart.addLineSeries>; fullData: KLineData[] }> = [];
