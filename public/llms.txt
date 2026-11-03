@@ -27,11 +27,8 @@ Status: v0.1.2. The public API is 0.x and may change between minor versions.
   compare series, watchlist, layouts, screenshot, fullscreen, symbol switching.
 - Every route is prerendered to static HTML; there is no server runtime.
 
-Bundled chart data is demonstration data. Each symbol's manifest names Financial
-Modeling Prep as its source and lists no synthetic series. Daily bars cover 2025;
-intraday bars cover only recent windows. The repository cannot verify how the files
-were fetched. News items name their source site but are not verified records.
-Replay is not a point-in-time research or execution receipt.
+Bundled chart data is demonstration data: daily bars for 2025, and intraday bars
+for recent windows only. Replay is for demonstration.
 
 ## Engine capabilities
 
