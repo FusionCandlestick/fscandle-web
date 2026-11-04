@@ -23,6 +23,7 @@ import {
 } from "./chart-demo-data";
 import { cn, DEMO_FRAME_CLASSES } from "./styles";
 import type { LandingThemeTokens } from "./tokens";
+import { replaySeedCount } from "./replay";
 
 export type ChartStyle = "candle" | "hollow" | "line" | "step" | "baseline" | "area" | "ha" | "bar";
 export type PriceScaleMode = "normal" | "log";
@@ -114,18 +115,12 @@ export interface ChartDemoConfig {
   replay?: boolean;
 }
 
-const REPLAY_SEED_RATIO = 0.58;
 // Several demo charts can be replaying concurrently (hero + up to a few
 // grid tiles), each recalculating indicators on every tick — this interval
 // keeps the \"live\" feel without turning that into a CPU-bound page.
 const REPLAY_TICK_MS = 110;
 const REPLAY_TICKS_PER_BAR = 3;
 const REPLAY_LOOP_PAUSE_MS = 1600;
-
-/** How many bars are on screen before a replay starts streaming the rest. */
-export function replaySeedCount(count: number): number {
-  return Math.max(4, Math.round(count * REPLAY_SEED_RATIO));
-}
 
 /** One in-progress bar, ticking toward its final OHLC over a few steps —
  * this is what makes the replay read as \"live\" rather than a fast-forward. */

@@ -6,7 +6,7 @@ import { DemoChartFrame } from "../DemoChartFrame";
 import { ShowcaseFrame, ShowcaseMobileCode, ShowcaseViewToggle } from "../ShowcaseFrame";
 import { useReducedMotion } from "../hooks/useReducedMotion";
 import { cn, text, toggleButton } from "../styles";
-import { replaySeedCount } from "../DemoChart";
+import { replaySeedCount } from "../replay";
 import type { ChartDemoConfig, ChartStyle, SegmentedPhase } from "../DemoChart";
 import type { LandingThemeTokens } from "../tokens";
 
