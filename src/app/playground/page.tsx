@@ -286,7 +286,7 @@ export default function PlaygroundPage() {
   const [replayPlaying, setReplayPlaying] = useState(false);
   const [replayInitialized, setReplayInitialized] = useState(false);
 
-  const rootRef = useRef<HTMLDivElement | null>(null);
+  const rootRef = useRef<HTMLElement | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
   const mainAdapter = useRef<ChartAdapter | null>(null);
@@ -742,7 +742,7 @@ export default function PlaygroundPage() {
   };
 
   return (
-    <div ref={rootRef} style={themeVars} className={`h-screen w-screen ${surface.shell} ${text.main} overflow-hidden flex flex-col`}>
+    <main ref={rootRef} style={themeVars} className={`h-screen w-screen ${surface.shell} ${text.main} overflow-hidden flex flex-col`}>
       <div className={`relative z-[5000] flex ${isCompactViewport ? "flex-wrap items-start justify-start gap-1" : "items-center justify-between gap-1 whitespace-nowrap"} overflow-visible border-b px-2 py-1.5 ${surface.chrome}`}>
         <input ref={importInputRef} type="file" accept=".json,application/json" className="hidden" onChange={onImportDrawings} />
 
@@ -822,6 +822,7 @@ export default function PlaygroundPage() {
           </div>
 
           <select
+            aria-label="Period"
             value={period}
             onChange={(event) => {
               const next = event.target.value as Period;
@@ -847,6 +848,7 @@ export default function PlaygroundPage() {
               applyToVisible((adapter) => adapter.setChartStyle(next));
             }}
             className={select("lg", "w-20 pl-1.5 pr-5 text-xs")}
+            aria-label="Chart style"
             title="Chart Style"
           >
             <option value="candle">Candle</option>
@@ -1399,6 +1401,6 @@ export default function PlaygroundPage() {
           }}
         />
       )}
-    </div>
+    </main>
   );
 }

@@ -27,8 +27,10 @@ export function CodeBlock({ code, className }: CodeBlockProps) {
   return (
     <div className={cn("relative group h-full flex flex-col", className)}>
       <pre
+        tabIndex={0}
+        aria-label="Code example"
         className={cn(
-          "w-full h-full overflow-auto rounded-[12px] border p-4 pr-9 text-[12px] leading-[1.4]",
+          "w-full h-full overflow-auto rounded-[12px] border p-4 pr-9 text-[12px] leading-[1.4] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lp-focus-ring)]",
           "border-[color:var(--lp-border)] bg-[var(--lp-chrome-bg)]",
           text.soft,
         )}
