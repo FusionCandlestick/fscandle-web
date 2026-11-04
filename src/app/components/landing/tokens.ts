@@ -75,6 +75,20 @@ export interface LandingThemeTokens {
   overlayColors: { trend: string; channel: string; signal: string };
 }
 
+/** Brand colours of the wordmark. The same in both themes. */
+export const BRAND_COLORS = {
+  fusion: "#FF5A5A",
+  candlestick: "#008755",
+} as const;
+
+/** Drawing-tool categories in the drawing showcase. The same in both themes. */
+export const ANNOTATION_COLORS = {
+  geometry: "#22d3ee",
+  fibonacci: "#fbbf24",
+  measure: "#a78bfa",
+  note: "#22c55e",
+} as const;
+
 export const LANDING_THEMES: Record<ThemeMode, LandingThemeTokens> = {
   dark: {
     shellBg: "#000000",

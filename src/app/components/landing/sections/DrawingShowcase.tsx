@@ -7,14 +7,15 @@ import { ShowcaseFrame, ShowcaseMobileCode, ShowcaseViewToggle } from "../Showca
 import { cn, text, toggleButton } from "../styles";
 import { drawingOverlayFactory, type DrawingOverlayKind } from "../chart-demo-data";
 import type { ChartDemoConfig } from "../DemoChart";
+import { ANNOTATION_COLORS } from "../tokens";
 import type { LandingThemeTokens } from "../tokens";
 
 // Colours mirror chart-demo-data: cyan = straight-edge geometry, amber = the
 // Fibonacci grid, green = annotations.
-const GEOMETRY = "#22d3ee";
-const FIB = "#fbbf24";
-const MEASURE = "#a78bfa";
-const NOTE = "#22c55e";
+const GEOMETRY = ANNOTATION_COLORS.geometry;
+const FIB = ANNOTATION_COLORS.fibonacci;
+const MEASURE = ANNOTATION_COLORS.measure;
+const NOTE = ANNOTATION_COLORS.note;
 
 const DRAWING_PRESETS = [
   { id: "line:trend", label: "Trendline", desc: "2 points", swatch: GEOMETRY },

@@ -1,5 +1,6 @@
 import { asset } from "../../lib/asset";
 import { cn } from "./styles";
+import { BRAND_COLORS } from "./tokens";
 
 /**
  * The FusionCandlestick logo lockup: the transparent spherical mark, then the
@@ -32,8 +33,8 @@ export function Wordmark({
           className="flex flex-col justify-center font-semibold leading-[0.8] tracking-[-0.035em]"
           style={{ fontFamily: "var(--font-display)", fontSize: size * 0.6 }}
         >
-          <span style={{ color: "#FF5A5A" }}>Fusion</span>
-          <span style={{ color: "#008755" }}>Candlestick</span>
+          <span style={{ color: BRAND_COLORS.fusion }}>Fusion</span>
+          <span style={{ color: BRAND_COLORS.candlestick }}>Candlestick</span>
         </span>
       )}
       <span className="sr-only">FusionCandlestick</span>
