@@ -43,6 +43,6 @@ export const FAQ_ITEMS: FAQItem[] = [
     category: "Integration",
     question: "Does FusionCandlestick support real-time streaming and replay data sources?",
     answer:
-      "The datafeed entry (fscandle/datafeed) ships generic static, replay, polling, and WebSocket helpers via bindMarketDataFeed. They cover historical playback and live tick sources; transport concerns such as reconnection and heartbeats are the datafeed implementation's responsibility, not the chart's.",
+      "The datafeed entry (fscandle/datafeed) ships generic static, replay, polling, and WebSocket helpers via bindMarketDataFeed. They cover historical playback and live tick sources. The WebSocket helper reconnects with exponential backoff; heartbeats and provider-specific protocol details belong to the data source, not the chart.",
   },
 ];
