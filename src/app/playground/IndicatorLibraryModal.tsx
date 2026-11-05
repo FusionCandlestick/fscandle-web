@@ -11,6 +11,7 @@ const packages = [
   { name: 'Volatility & reversion', desc: 'Price bands, relative strength and trading range.', ids: ['BOLL', 'RSI', 'ATR'] },
   { name: 'Volume & momentum', desc: 'Volume accumulation, average volume and stochastic momentum.', ids: ['OBV', 'VOLMA', 'KDJ'] },
   { name: 'Momentum extremes', desc: 'Compare three complementary momentum oscillators.', ids: ['WR', 'CCI', 'STOCHRSI'] },
+  { name: 'Channels & trend', desc: 'Price channels, trend flips and the Ichimoku cloud.', ids: ['DC', 'KC', 'SUPERTREND', 'ICHIMOKU'] },
 ];
 
 export function IndicatorLibraryModal({ catalog, onClose, onAdd }: {

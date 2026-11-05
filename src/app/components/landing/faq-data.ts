@@ -31,13 +31,13 @@ export const FAQ_ITEMS: FAQItem[] = [
     category: "Technical",
     question: "Which technical indicators and chart series styles are natively supported?",
     answer:
-      "Eight series renderers — candlestick, hollow candle, Heikin-Ashi, OHLC bar, area, line, step line, and baseline — plus a volume mode. Sixteen built-in indicators: MA, EMA, BOLL, MACD, RSI, KDJ, WR, VOLMA, ATR, ADX, ROC, CCI, OBV, VWAP, STOCHRSI, and PSAR, with automatic cross-pane time and cursor synchronization.",
+      "Eight series renderers — candlestick, hollow candle, Heikin-Ashi, OHLC bar, area, line, step line, and baseline — plus a volume mode. Twenty built-in indicators: MA, EMA, BOLL, MACD, RSI, KDJ, WR, VOLMA, ATR, ADX, ROC, CCI, OBV, VWAP, STOCHRSI, PSAR, Donchian and Keltner channels, SuperTrend, and Ichimoku, with automatic cross-pane time and cursor synchronization.",
   },
   {
     category: "Technical",
     question: "Can I implement custom series types or proprietary drawing tools?",
     answer:
-      "Yes. chart.defineSeriesType() registers a custom Canvas series renderer, chart.registerOverlayTemplate() registers custom overlays, and ChartPrimitive is the single extension model for pane views, axis views, hit testing, and pointer interactions.",
+      "Yes. chart.defineSeriesType() registers a custom Canvas series renderer, chart.addCustomPane() adds a pane whose body you draw, chart.registerOverlayTemplate() registers custom overlays, and ChartPrimitive is the single extension model for pane views, axis views, hit testing, and pointer interactions.",
   },
   {
     category: "Integration",

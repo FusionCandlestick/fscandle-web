@@ -60,13 +60,13 @@ export const metadata: Metadata = {
     siteName: "FusionCandlestick",
     title: "FusionCandlestick — Canvas K-Line Engine & Terminal Shell",
     description:
-      "A free-form HTML5 Canvas K-line charting engine with 8 series renderers, 16 indicators, precision drawing tools, and a synchronized multi-panel financial terminal workspace.",
+      "A free-form HTML5 Canvas K-line charting engine with 8 series renderers, 20 indicators, precision drawing tools, and a synchronized multi-panel financial terminal workspace.",
   },
   twitter: {
     card: "summary_large_image",
     title: "FusionCandlestick — Canvas Financial Chart Engine",
     description:
-      "Non-commercial source-available HTML5 Canvas K-line engine with 8 series renderers, 16 indicators, and a multi-panel workspace shell.",
+      "Non-commercial source-available HTML5 Canvas K-line engine with 8 series renderers, 20 indicators, and a multi-panel workspace shell.",
   },
   alternates: {
     canonical: SITE_URL,
@@ -109,9 +109,9 @@ const jsonLdGraph = {
       },
       featureList: [
         "Custom HTML5 Canvas K-line renderer: candle, hollow, Heikin-Ashi, bar, area, line, step line, baseline, and volume modes",
-        "16 built-in technical indicators (MA, EMA, BOLL, MACD, RSI, KDJ, WR, VOLMA, ATR, ADX, ROC, CCI, OBV, VWAP, STOCHRSI, PSAR)",
+        "20 built-in technical indicators (MA, EMA, BOLL, MACD, RSI, KDJ, WR, VOLMA, ATR, ADX, ROC, CCI, OBV, VWAP, STOCHRSI, PSAR, DC, KC, SUPERTREND, ICHIMOKU)",
         "Multiple panes, multi-column price axes, synced charts, and overlay drawing tools with magnet snapping",
-        "Declarative custom series via defineSeriesType and custom overlays via figure descriptors",
+        "Declarative custom series via defineSeriesType, custom panes drawn by a callback via addCustomPane, and custom overlays via figure descriptors",
         "Timezone-aware axis labelling, session-aware gap compression, and bundled English and Chinese (Simplified & Traditional) locale dictionaries with a runtime registration API for any other language",
         "Single Canvas render loop with no per-bar DOM nodes and high-DPI aware drawing",
       ],

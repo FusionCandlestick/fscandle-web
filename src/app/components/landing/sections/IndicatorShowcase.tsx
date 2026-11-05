@@ -64,7 +64,7 @@ chart.createIndicator('MACD', { newPane: true, calcParams: [12, 26, 9] });`;
           Overlay trend indicators and real-time volume on the main price chart, while driving dedicated oscillator sub-panes (MACD, RSI, KDJ, ATR) with independent scaling and dynamic pane resizing.
         </p>
         <p className={cn("mt-2 text-xs leading-[1.4]", text.muted)}>
-          Includes 16 built-ins: MA, EMA, BOLL, MACD, RSI, KDJ, WR, VOLMA, ATR, ADX, ROC, CCI, OBV, VWAP, Stochastic RSI, and PSAR. Volume is also available as a native series. Each can run in the price pane or an independently scaled sub-pane.
+          Includes 20 built-ins: MA, EMA, BOLL, MACD, RSI, KDJ, WR, VOLMA, ATR, ADX, ROC, CCI, OBV, VWAP, Stochastic RSI, PSAR, Donchian and Keltner channels, SuperTrend, and Ichimoku. Volume is also available as a native series. Each can run in the price pane or an independently scaled sub-pane.
         </p>
       </div>
 

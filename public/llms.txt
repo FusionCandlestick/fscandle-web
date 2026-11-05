@@ -34,12 +34,15 @@ for recent windows only. Replay is for demonstration.
 
 - Series renderers (8): candlestick, hollow candle, Heikin-Ashi, OHLC bar,
   area, line, step line, baseline; plus a volume mode.
-- Built-in indicators (16): MA, EMA, BOLL, MACD, RSI, KDJ, WR, VOLMA, ATR,
-  ADX, ROC, CCI, OBV, VWAP, STOCHRSI, PSAR.
+- Built-in indicators (20): MA, EMA, BOLL, MACD, RSI, KDJ, WR, VOLMA, ATR,
+  ADX, ROC, CCI, OBV, VWAP, STOCHRSI, PSAR, DC (Donchian channels), KC (Keltner
+  channels), SUPERTREND and ICHIMOKU.
 - Multiple panes, multi-column price axes, synced charts, overlay drawing
   tools with magnet snapping, and local state persistence.
 - Public facade APIs: `timeScale()`, `priceScale()`, `series()`, `pane()`.
 - `ChartPrimitive` extension API: pane/axis views, hit testing, pointer handlers.
+- Custom panes drawn by a callback via `addCustomPane`, with their own price
+  range; primitives can target them by id.
 - Declarative custom series via `defineSeriesType`; custom overlays via figure
   descriptors with draw/select/click/drag/remove lifecycle callbacks.
 - Explicit `Period` / `TradingSession` model with timezone-aware axis

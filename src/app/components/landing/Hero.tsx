@@ -39,7 +39,7 @@ export function Hero({ theme }: { theme: LandingThemeTokens }) {
           </h1>
 
           <p className={cn("mt-4 max-w-xl text-[16px] leading-[1.4]", text.muted)}>
-            A <strong className={text.main}>from-scratch HTML5 Canvas candlestick chart library</strong> for JavaScript and TypeScript &mdash; no SVG, no per-bar DOM. One surface renders 8 series types, 16 technical indicators, multi-pane synced layouts and a full drawing suite from a <strong className={text.main}>~71&nbsp;KB gzipped</strong> core, with React components and static / replay / polling / WebSocket datafeed adapters.
+            A <strong className={text.main}>from-scratch HTML5 Canvas candlestick chart library</strong> for JavaScript and TypeScript &mdash; no SVG, no per-bar DOM. One surface renders 8 series types, 20 technical indicators, multi-pane synced layouts and a full drawing suite from a <strong className={text.main}>~71&nbsp;KB gzipped</strong> core, with React components and static / replay / polling / WebSocket datafeed adapters.
           </p>
 
           {/* Action CTAs: 3 Buttons with Equal Width (Static without slide effect) */}

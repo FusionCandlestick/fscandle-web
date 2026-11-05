@@ -108,6 +108,14 @@ const INDICATOR_CATALOG: IndicatorMeta[] = [
       "Stop and reverse points plotted on candles to capture trailing momentum."],
     ["VWAP", "Volume Weighted Avg Price", "Session",
       "Benchmark giving the average price a security traded at based on volume."],
+    ["DC", "Donchian Channels", "20",
+      "Highest high and lowest low over the period, with their midpoint."],
+    ["KC", "Keltner Channels", "20, 10, 2",
+      "An EMA with bands a multiple of the average true range either side."],
+    ["SUPERTREND", "SuperTrend", "10, 3",
+      "ATR bands that flip the trend when price closes through them."],
+    ["ICHIMOKU", "Ichimoku Cloud", "9, 26, 52",
+      "Tenkan, Kijun, the cloud between two leading spans, and the lagging span."],
   ]),
   // --- Subpane Oscillators ---
   ...builtInIndicators("subpane", [
